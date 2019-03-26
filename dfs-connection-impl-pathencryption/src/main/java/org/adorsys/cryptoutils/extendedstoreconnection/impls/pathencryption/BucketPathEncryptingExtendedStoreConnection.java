@@ -1,23 +1,24 @@
 package org.adorsys.cryptoutils.extendedstoreconnection.impls.pathencryption;
 
-import org.adorsys.cryptoutils.exceptions.BaseException;
-import org.adorsys.cryptoutils.utils.Frame;
-import org.adorsys.encobject.complextypes.BucketDirectory;
-import org.adorsys.encobject.complextypes.BucketPath;
-import org.adorsys.encobject.complextypes.BucketPathUtil;
-import org.adorsys.encobject.domain.Payload;
-import org.adorsys.encobject.domain.PayloadStream;
-import org.adorsys.encobject.domain.StorageMetadata;
-import org.adorsys.encobject.domain.StorageType;
-import org.adorsys.encobject.exceptions.BucketRestrictionException;
-import org.adorsys.encobject.service.api.ExtendedStoreConnection;
-import org.adorsys.encobject.service.impl.SimplePayloadImpl;
-import org.adorsys.encobject.service.impl.SimplePayloadStreamImpl;
-import org.adorsys.encobject.service.impl.SimpleStorageMetadataImpl;
-import org.adorsys.encobject.types.BucketPathEncryptionPassword;
-import org.adorsys.encobject.types.ExtendedStoreConnectionType;
-import org.adorsys.encobject.types.ListRecursiveFlag;
-import org.adorsys.encobject.types.properties.BucketPathEncryptionFilenameOnly;
+
+import org.adorsys.common.exceptions.BaseException;
+import org.adorsys.common.utils.Frame;
+import org.adorsys.dfs.connection.api.complextypes.BucketDirectory;
+import org.adorsys.dfs.connection.api.complextypes.BucketPath;
+import org.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
+import org.adorsys.dfs.connection.api.domain.Payload;
+import org.adorsys.dfs.connection.api.domain.PayloadStream;
+import org.adorsys.dfs.connection.api.domain.StorageMetadata;
+import org.adorsys.dfs.connection.api.domain.StorageType;
+import org.adorsys.dfs.connection.api.exceptions.BucketRestrictionException;
+import org.adorsys.dfs.connection.api.service.api.ExtendedStoreConnection;
+import org.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
+import org.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
+import org.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
+import org.adorsys.dfs.connection.api.types.BucketPathEncryptionPassword;
+import org.adorsys.dfs.connection.api.types.ExtendedStoreConnectionType;
+import org.adorsys.dfs.connection.api.types.ListRecursiveFlag;
+import org.adorsys.dfs.connection.api.types.properties.BucketPathEncryptionFilenameOnly;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

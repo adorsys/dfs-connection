@@ -1,29 +1,23 @@
 package org.adorsys.cryptoutils.extendedstoreconnection.impls.pathencryption;
 
-import org.adorsys.cryptoutils.exceptions.BaseExceptionHandler;
-import org.adorsys.cryptoutils.utils.HexUtil;
-import org.adorsys.encobject.complextypes.BucketDirectory;
-import org.adorsys.encobject.complextypes.BucketPath;
-import org.adorsys.encobject.complextypes.BucketPathUtil;
-import org.adorsys.encobject.exceptions.PathDecryptionException;
-import org.adorsys.encobject.exceptions.PathEncryptionException;
-import org.adorsys.encobject.types.BucketPathEncryptionPassword;
-import org.adorsys.encobject.types.properties.BucketPathEncryptionFilenameOnly;
+import org.adorsys.common.exceptions.BaseExceptionHandler;
+import org.adorsys.common.utils.HexUtil;
+import org.adorsys.dfs.connection.api.complextypes.BucketDirectory;
+import org.adorsys.dfs.connection.api.complextypes.BucketPath;
+import org.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
+import org.adorsys.dfs.connection.api.exceptions.PathDecryptionException;
+import org.adorsys.dfs.connection.api.exceptions.PathEncryptionException;
+import org.adorsys.dfs.connection.api.types.BucketPathEncryptionPassword;
+import org.adorsys.dfs.connection.api.types.properties.BucketPathEncryptionFilenameOnly;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.StringTokenizer;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Created by peter on 25.09.18.
