@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>de.adorsys.cryptoutils</groupId>
-        <artifactId>storeconnection-impls</artifactId>
-        <version>0.23.14-SNAPSHOT</version>
+        <groupId>org.adorsys</groupId>
+        <artifactId>dfs-connection</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>dfs-connection-impl-amazons3</artifactId>
@@ -88,12 +88,14 @@
 
     <dependencies>
         <dependency>
-            <groupId>de.adorsys.cryptoutils</groupId>
-            <artifactId>storeconnection-api</artifactId>
+            <groupId>org.adorsys</groupId>
+            <artifactId>dfs-connection-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>de.adorsys.cryptoutils</groupId>
-            <artifactId>pathencryption</artifactId>
+            <groupId>org.adorsys</groupId>
+            <artifactId>dfs-connection-impl-pathencryption</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>

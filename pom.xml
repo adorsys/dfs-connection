@@ -3,11 +3,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.adorsys</groupId>
 	<artifactId>dfs-connection</artifactId>
-	<version>0.23.14-SNAPSHOT</version>
-    <name>Cryptographic helpers for Secure Banking</name>
-    <description>Utility Components for the development of secure banking modules. Components developed under this tree
-        are released as jar.
-    </description>
+	<version>0.0.1-SNAPSHOT</version>
+    <name>dfs-connection</name>
     <url>https://github.com/adorsys/dfs-connection</url>
     <packaging>pom</packaging>
     <scm>
@@ -51,10 +48,10 @@
 
     <modules>
         <module>dfs-connection-api</module>
+        <module>dfs-connection-impl-pathencryption</module>
         <module>dfs-connection-impl-amazons3</module>
         <module>dfs-connection-impl-filesystem</module>
         <module>dfs-connection-impl-mongodb</module>
-        <module>dfs-connection-impl-pathencryption</module>
         <module>dfs-connection-impl-storeconnectionfactory</module>
     </modules>
 

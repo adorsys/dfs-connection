@@ -3,9 +3,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>storeconnection-impls</artifactId>
-        <groupId>de.adorsys.cryptoutils</groupId>
-        <version>0.23.14-SNAPSHOT</version>
+        <groupId>org.adorsys</groupId>
+        <artifactId>dfs-connection</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -13,12 +13,14 @@
 
     <dependencies>
         <dependency>
-            <groupId>de.adorsys.cryptoutils</groupId>
-            <artifactId>storeconnection-api</artifactId>
+            <groupId>org.adorsys</groupId>
+            <artifactId>dfs-connection-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>de.adorsys.cryptoutils</groupId>
-            <artifactId>pathencryption</artifactId>
+            <groupId>org.adorsys</groupId>
+            <artifactId>dfs-connection-impl-pathencryption</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
 
