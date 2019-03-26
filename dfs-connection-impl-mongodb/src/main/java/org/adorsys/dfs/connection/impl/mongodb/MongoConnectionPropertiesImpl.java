@@ -1,9 +1,8 @@
-package org.adorsys.cryptoutils.mongodbstoreconnection;
+package org.adorsys.dfs.connection.impl.mongodb;
 
-import org.adorsys.encobject.types.connection.*;
-import org.adorsys.encobject.types.properties.ConnectionPropertiesImpl;
-import org.adorsys.encobject.types.properties.MongoConnectionProperties;
-
+import org.adorsys.dfs.connection.api.types.connection.MongoURI;
+import org.adorsys.dfs.connection.api.types.properties.ConnectionPropertiesImpl;
+import org.adorsys.dfs.connection.api.types.properties.MongoConnectionProperties;
 /**
  * Created by peter on 04.10.18.
  */

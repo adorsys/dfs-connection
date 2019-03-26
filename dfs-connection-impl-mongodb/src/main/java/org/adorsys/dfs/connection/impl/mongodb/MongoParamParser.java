@@ -1,13 +1,11 @@
-package org.adorsys.cryptoutils.mongodbstoreconnection;
+package org.adorsys.dfs.connection.impl.mongodb;
 
-import org.adorsys.cryptoutils.exceptions.BaseExceptionHandler;
-import org.adorsys.encobject.exceptions.ParamParserException;
-import org.adorsys.encobject.types.connection.*;
-import org.adorsys.encobject.types.properties.MongoConnectionProperties;
+
+import org.adorsys.dfs.connection.api.exceptions.ParamParserException;
+import org.adorsys.dfs.connection.api.types.connection.MongoURI;
+import org.adorsys.dfs.connection.api.types.properties.MongoConnectionProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.StringTokenizer;
 
 /**
  * Created by peter on 13.04.18 at 16:19.

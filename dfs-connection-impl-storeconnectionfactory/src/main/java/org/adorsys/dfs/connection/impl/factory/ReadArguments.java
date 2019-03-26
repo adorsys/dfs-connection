@@ -1,13 +1,13 @@
-package org.adorsys.cryptoutils.storeconnectionfactory;
+package org.adorsys.dfs.connection.impl.factory;
 
-import org.adorsys.cryptoutils.exceptions.BaseExceptionHandler;
-import org.adorsys.dfs.connection.impl.amazons3.AmazonS3ParamParser;
-import org.adorsys.cryptoutils.mongodbstoreconnection.MongoParamParser;
+import org.adorsys.common.exceptions.BaseExceptionHandler;
 import org.adorsys.dfs.connection.api.filesystem.FileSystemParamParser;
-import org.adorsys.encobject.types.BucketPathEncryptionPassword;
-import org.adorsys.encobject.types.properties.BucketPathEncryptionFilenameOnly;
-import org.adorsys.encobject.types.properties.ConnectionProperties;
-import org.adorsys.encobject.types.properties.ConnectionPropertiesImpl;
+import org.adorsys.dfs.connection.api.types.BucketPathEncryptionPassword;
+import org.adorsys.dfs.connection.api.types.properties.BucketPathEncryptionFilenameOnly;
+import org.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
+import org.adorsys.dfs.connection.api.types.properties.ConnectionPropertiesImpl;
+import org.adorsys.dfs.connection.impl.amazons3.AmazonS3ParamParser;
+import org.adorsys.dfs.connection.impl.mongodb.MongoParamParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

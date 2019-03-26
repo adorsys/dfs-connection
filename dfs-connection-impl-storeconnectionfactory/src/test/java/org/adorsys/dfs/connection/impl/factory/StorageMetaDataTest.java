@@ -1,4 +1,23 @@
-package org.adorsys.cryptoutils.storageconnection.testsuite;
+package org.adorsys.dfs.connection.impl.factory;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import junit.framework.Assert;
+import org.adorsys.common.exceptions.BaseException;
+import org.adorsys.common.exceptions.BaseExceptionHandler;
+import org.adorsys.dfs.connection.api.complextypes.BucketDirectory;
+import org.adorsys.dfs.connection.api.complextypes.BucketPath;
+import org.adorsys.dfs.connection.api.domain.*;
+import org.adorsys.dfs.connection.api.filesystem.StorageMetadataFlattenerGSON;
+import org.adorsys.dfs.connection.api.service.api.ExtendedStoreConnection;
+import org.adorsys.dfs.connection.api.service.impl.SimpleLocationImpl;
+import org.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
+import org.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URI;
@@ -6,40 +25,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
-
-import org.adorsys.cryptoutils.exceptions.BaseException;
-import org.adorsys.cryptoutils.exceptions.BaseExceptionHandler;
-import org.adorsys.cryptoutils.storeconnectionfactory.ExtendedStoreConnectionFactory;
-import org.adorsys.encobject.complextypes.BucketDirectory;
-import org.adorsys.encobject.complextypes.BucketPath;
-import org.adorsys.encobject.domain.Location;
-import org.adorsys.encobject.domain.LocationScope;
-import org.adorsys.encobject.domain.Payload;
-import org.adorsys.encobject.domain.StorageMetadata;
-import org.adorsys.encobject.domain.StorageType;
-import org.adorsys.encobject.filesystem.StorageMetadataFlattenerGSON;
-import org.adorsys.encobject.service.api.ExtendedStoreConnection;
-import org.adorsys.encobject.service.impl.SimpleLocationImpl;
-import org.adorsys.encobject.service.impl.SimplePayloadImpl;
-import org.adorsys.encobject.service.impl.SimpleStorageMetadataImpl;
-import org.apache.commons.lang3.SystemUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import junit.framework.Assert;
 
 /**
  * Created by peter on 20.02.18 at 16:53.
@@ -236,7 +223,7 @@ public class StorageMetaDataTest {
      * nach dem Test genau einmal mehr geschrieben sein muss, als vor dem Test. Daher wird für diesen Test
      * logback benötigt, denn der Simpple-Logger schreibt nicht in Dateien und auf stdout gleichzeitig
      */
-    @Test
+    // @Test WILL BE REPLACED WITH MOCK
     public void testCheckMetaInfoOnlyReadOnceForDocument() {
         try {
             LOGGER.debug("START TEST " + new RuntimeException("").getStackTrace()[0].getMethodName());

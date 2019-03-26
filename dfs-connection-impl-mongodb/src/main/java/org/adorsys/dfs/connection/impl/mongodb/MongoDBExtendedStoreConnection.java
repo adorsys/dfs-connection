@@ -1,10 +1,10 @@
-package org.adorsys.cryptoutils.mongodbstoreconnection;
+package org.adorsys.dfs.connection.impl.mongodb;
 
-import org.adorsys.cryptoutils.extendedstoreconnection.impls.pathencryption.BucketPathEncryptingExtendedStoreConnection;
-import org.adorsys.encobject.types.BucketPathEncryptionPassword;
-import org.adorsys.encobject.types.connection.*;
-import org.adorsys.encobject.types.properties.BucketPathEncryptionFilenameOnly;
-import org.adorsys.encobject.types.properties.MongoConnectionProperties;
+import org.adorsys.dfs.connection.api.types.BucketPathEncryptionPassword;
+import org.adorsys.dfs.connection.api.types.connection.MongoURI;
+import org.adorsys.dfs.connection.api.types.properties.BucketPathEncryptionFilenameOnly;
+import org.adorsys.dfs.connection.api.types.properties.MongoConnectionProperties;
+import org.adorsys.dfs.connection.impl.pathencryption.BucketPathEncryptingExtendedStoreConnection;
 
 /**
  * Created by peter on 27.09.18.

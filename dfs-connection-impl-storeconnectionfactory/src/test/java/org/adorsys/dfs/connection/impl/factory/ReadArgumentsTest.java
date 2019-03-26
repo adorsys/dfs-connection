@@ -1,10 +1,9 @@
-package org.adorsys.cryptoutils.storageconnection.testsuite;
+package org.adorsys.dfs.connection.impl.factory;
 
-import org.adorsys.cryptoutils.storeconnectionfactory.ReadArguments;
-import org.adorsys.encobject.types.properties.AmazonS3ConnectionProperties;
-import org.adorsys.encobject.types.properties.ConnectionProperties;
-import org.adorsys.encobject.types.properties.FilesystemConnectionProperties;
-import org.adorsys.encobject.types.properties.MongoConnectionProperties;
+import org.adorsys.dfs.connection.api.types.properties.AmazonS3ConnectionProperties;
+import org.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
+import org.adorsys.dfs.connection.api.types.properties.FilesystemConnectionProperties;
+import org.adorsys.dfs.connection.api.types.properties.MongoConnectionProperties;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -48,7 +47,7 @@ public class ReadArgumentsTest {
     public void testEnvMongo1() {
         System.setProperty(ReadArguments.MONGO, "localhost:27017/mongdb");
         ConnectionProperties properties = new ReadArguments().readEnvironment();
-        Assert.assertTrue(properties instanceof  MongoConnectionProperties);
+        Assert.assertTrue(properties instanceof MongoConnectionProperties);
         Assert.assertTrue(properties.getBucketPathEncryptionPassword() != null);
         MongoConnectionProperties m = (MongoConnectionProperties) properties;
         Assert.assertTrue(m.getMongoURI() != null);
@@ -66,7 +65,7 @@ public class ReadArgumentsTest {
     public void testEnvFilesystem1() {
         System.setProperty(ReadArguments.FILESYSTEM, "target/filesystem");
         ConnectionProperties properties = new ReadArguments().readEnvironment();
-        Assert.assertTrue(properties instanceof  FilesystemConnectionProperties);
+        Assert.assertTrue(properties instanceof FilesystemConnectionProperties);
         Assert.assertTrue(properties.getBucketPathEncryptionPassword() != null);
     }
 

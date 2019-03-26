@@ -1,14 +1,14 @@
-package org.adorsys.cryptoutils.storeconnectionfactory;
+package org.adorsys.dfs.connection.impl.factory;
 
-import org.adorsys.cryptoutils.exceptions.BaseException;
-import org.adorsys.dfs.connection.impl.amazons3.AmazonS3ExtendedStoreConnection;
-import org.adorsys.cryptoutils.mongodbstoreconnection.MongoDBExtendedStoreConnection;
+import org.adorsys.common.exceptions.BaseException;
 import org.adorsys.dfs.connection.api.filesystem.FileSystemExtendedStorageConnection;
-import org.adorsys.encobject.service.api.ExtendedStoreConnection;
-import org.adorsys.encobject.types.properties.AmazonS3ConnectionProperties;
-import org.adorsys.encobject.types.properties.ConnectionProperties;
-import org.adorsys.encobject.types.properties.FilesystemConnectionProperties;
-import org.adorsys.encobject.types.properties.MongoConnectionProperties;
+import org.adorsys.dfs.connection.api.service.api.ExtendedStoreConnection;
+import org.adorsys.dfs.connection.api.types.properties.AmazonS3ConnectionProperties;
+import org.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
+import org.adorsys.dfs.connection.api.types.properties.FilesystemConnectionProperties;
+import org.adorsys.dfs.connection.api.types.properties.MongoConnectionProperties;
+import org.adorsys.dfs.connection.impl.amazons3.AmazonS3ExtendedStoreConnection;
+import org.adorsys.dfs.connection.impl.mongodb.MongoDBExtendedStoreConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
