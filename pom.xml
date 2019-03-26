@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>de.adorsys.cryptoutils</groupId>
-	<artifactId>cryptoutils</artifactId>
+	<groupId>org.adorsys</groupId>
+	<artifactId>dfs-connection</artifactId>
 	<version>0.23.14-SNAPSHOT</version>
     <name>Cryptographic helpers for Secure Banking</name>
     <description>Utility Components for the development of secure banking modules. Components developed under this tree
         are released as jar.
     </description>
-    <url>https://github.com/adorsys/cryptoutils</url>
+    <url>https://github.com/adorsys/dfs-connection</url>
     <packaging>pom</packaging>
     <scm>
-        <connection>scm:git@github.com:adorsys/cryptoutils.git</connection>
-        <developerConnection>scm:git:git@github.com:adorsys/cryptoutils.git</developerConnection>
-        <url>git@github.com:adorsys/cryptoutils.git</url>
+        <connection>scm:git@github.com:adorsys/dfs-connection.git</connection>
+        <developerConnection>scm:git:git@github.com:adorsys/dfs-connection.git</developerConnection>
+        <url>git@github.com:adorsys/dfs-connection.git</url>
         <tag>HEAD</tag>
     </scm>
     <licenses>
@@ -46,84 +46,20 @@
         <amazon.aws.version>1.11.409</amazon.aws.version>
         <apache.commons.lang3.version>3.8</apache.commons.lang3.version>
         <catch.exception.version>2.0.0-beta-1</catch.exception.version>
+        <common.basetypes.version>0.0.3-SNAPSHOT</common.basetypes.version>
     </properties>
 
     <modules>
-        <module>basetypes</module>
-        <module>extendedstoreconnection</module>
-        <module>jjwk</module>
-        <module>encobject</module>
-        <module>jtstamp</module>
-        <module>jkeyutils</module>
+        <module>dfs-connection-api</module>
+        <module>dfs-connection-impl-amazons3</module>
+        <module>dfs-connection-impl-filesystem</module>
+        <module>dfs-connection-impl-mongodb</module>
+        <module>dfs-connection-impl-pathencryption</module>
+        <module>dfs-connection-impl-storeconnectionfactory</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>pathencryption</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>extendedstoreconnection</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>storeconnection-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>storeconnection-impls</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>filesystemstoreconnection</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>mongodbstoreconnection</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>amazons3storeconnection</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>storeconnectionfactory</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>encobject</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>jjwk</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>jkeyutils</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>de.adorsys.cryptoutils</groupId>
-                <artifactId>basetypes</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-annotations</artifactId>
@@ -217,11 +153,22 @@
             <version>1.3</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>de.electronicpeter</groupId>
+            <artifactId>aspectj.test.timelogger</artifactId>
+            <version>1.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <version>1.7.25</version>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
 
     </dependencies>
 
     <build>
-        <finalName>cryptoutils</finalName>
+        <finalName>dfs-connection</finalName>
 
         <pluginManagement>
             <plugins>
