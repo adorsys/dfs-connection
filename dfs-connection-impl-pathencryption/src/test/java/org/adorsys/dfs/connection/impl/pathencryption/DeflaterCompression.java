@@ -1,6 +1,6 @@
-package org.adorsys.cryptoutils.extendedstoreconnection.impls.pathencryption;
+package org.adorsys.dfs.connection.impl.pathencryption;
 
-import org.adorsys.cryptoutils.exceptions.BaseExceptionHandler;
+import org.adorsys.common.exceptions.BaseExceptionHandler;
 
 import java.util.Arrays;
 import java.util.zip.Deflater;
@@ -9,7 +9,7 @@ import java.util.zip.Inflater;
 /**
  * Created by peter on 11.10.18 15:07.
  */
-public class DeflaterCompression implements StringCompression{
+public class DeflaterCompression implements StringCompression {
     public byte[] compress(String inputString) {
         try {
             byte[] input = inputString.getBytes("UTF-8");

@@ -1,7 +1,7 @@
-package org.adorsys.cryptoutils.extendedstoreconnection.impls.pathencryption;
+package org.adorsys.dfs.connection.impl.pathencryption;
 
 
-import org.adorsys.cryptoutils.exceptions.BaseExceptionHandler;
+import org.adorsys.common.exceptions.BaseExceptionHandler;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;

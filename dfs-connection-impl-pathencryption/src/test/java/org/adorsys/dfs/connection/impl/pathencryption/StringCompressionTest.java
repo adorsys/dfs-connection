@@ -1,8 +1,7 @@
-package org.adorsys.cryptoutils.extendedstoreconnection.impls.pathencryption;
+package org.adorsys.dfs.connection.impl.pathencryption;
 
-import org.adorsys.cryptoutils.utils.HexUtil;
+import org.adorsys.common.utils.HexUtil;
 import org.junit.Assert;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,4 +1,4 @@
-package org.adorsys.cryptoutils.extendedstoreconnection.impls.pathencryption;
+package org.adorsys.dfs.connection.impl.pathencryption;
 
 
 import org.adorsys.common.exceptions.BaseException;

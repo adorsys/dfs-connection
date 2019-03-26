@@ -1,12 +1,11 @@
-package org.adorsys.cryptoutils.extendedstoreconnection.impls.pathencryption;
+package org.adorsys.dfs.connection.impl.pathencryption;
 
-import org.adorsys.encobject.complextypes.BucketDirectory;
-import org.adorsys.encobject.complextypes.BucketPath;
-import org.adorsys.encobject.complextypes.BucketPathUtil;
-import org.adorsys.encobject.exceptions.PathDecryptionException;
-import org.adorsys.encobject.types.BucketPathEncryptionPassword;
-
-import org.adorsys.encobject.types.properties.BucketPathEncryptionFilenameOnly;
+import org.adorsys.dfs.connection.api.complextypes.BucketDirectory;
+import org.adorsys.dfs.connection.api.complextypes.BucketPath;
+import org.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
+import org.adorsys.dfs.connection.api.exceptions.PathDecryptionException;
+import org.adorsys.dfs.connection.api.types.BucketPathEncryptionPassword;
+import org.adorsys.dfs.connection.api.types.properties.BucketPathEncryptionFilenameOnly;
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.Assert;
 import org.junit.Test;
@@ -14,9 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by peter on 25.09.18.
@@ -122,8 +121,8 @@ public class BucketPathEncryptionTest {
         BucketDirectory BucketDirectory = new BucketDirectory("peter/folder1/1/2/3");
         BucketPathEncryptionPassword bucketPathEncryptionPassword1 = new BucketPathEncryptionPassword("affeAFFE1!");
         BucketPathEncryptionPassword bucketPathEncryptionPassword2 = new BucketPathEncryptionPassword("affeAFFE2!");
-        org.adorsys.encobject.complextypes.BucketDirectory encryptedBucketDirectory = BucketPathEncryption.encrypt(bucketPathEncryptionPassword1, BucketPathEncryptionFilenameOnly.FALSE, BucketDirectory);
-        org.adorsys.encobject.complextypes.BucketDirectory decryptedBucketDirectory = BucketPathEncryption.decrypt(bucketPathEncryptionPassword2, BucketPathEncryptionFilenameOnly.FALSE, encryptedBucketDirectory);
+        BucketDirectory encryptedBucketDirectory = BucketPathEncryption.encrypt(bucketPathEncryptionPassword1, BucketPathEncryptionFilenameOnly.FALSE, BucketDirectory);
+        BucketDirectory decryptedBucketDirectory = BucketPathEncryption.decrypt(bucketPathEncryptionPassword2, BucketPathEncryptionFilenameOnly.FALSE, encryptedBucketDirectory);
     }
 
     private void doTest(BucketDirectory bucketDirectory, BucketPathEncryptionPassword bucketPathEncryptionPassword) {
