@@ -1,4 +1,4 @@
-package org.adorsys.cryptoutils.mongodbstoreconnection;
+package org.adorsys.dfs.connection.impl.mongodb;
 
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
