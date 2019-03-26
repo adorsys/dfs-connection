@@ -1,20 +1,20 @@
 package org.adorsys.dfs.connection.api.filesystem;
 
-import java.io.File;
-import java.util.UUID;
-
-import org.adorsys.cryptoutils.exceptions.BaseExceptionHandler;
-import org.adorsys.encobject.complextypes.BucketDirectory;
-import org.adorsys.encobject.complextypes.BucketPath;
-import org.adorsys.encobject.service.impl.SimplePayloadImpl;
-import org.adorsys.encobject.service.impl.SimpleStorageMetadataImpl;
-import org.adorsys.encobject.types.connection.FilesystemRootBucketName;
-import org.adorsys.encobject.types.properties.BucketPathEncryptionFilenameOnly;
-import org.adorsys.encobject.types.properties.ConnectionProperties;
+import org.adorsys.common.exceptions.BaseExceptionHandler;
+import org.adorsys.dfs.connection.api.complextypes.BucketDirectory;
+import org.adorsys.dfs.connection.api.complextypes.BucketPath;
+import org.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
+import org.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
+import org.adorsys.dfs.connection.api.types.connection.FilesystemRootBucketName;
+import org.adorsys.dfs.connection.api.types.properties.BucketPathEncryptionFilenameOnly;
+import org.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.util.UUID;
 
 /**
  * Created by peter on 26.06.18 at 15:23.

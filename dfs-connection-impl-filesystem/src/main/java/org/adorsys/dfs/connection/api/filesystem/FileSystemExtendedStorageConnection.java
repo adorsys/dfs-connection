@@ -1,10 +1,11 @@
 package org.adorsys.dfs.connection.api.filesystem;
 
-import org.adorsys.cryptoutils.extendedstoreconnection.impls.pathencryption.BucketPathEncryptingExtendedStoreConnection;
-import org.adorsys.encobject.types.BucketPathEncryptionPassword;
-import org.adorsys.encobject.types.connection.FilesystemRootBucketName;
-import org.adorsys.encobject.types.properties.BucketPathEncryptionFilenameOnly;
-import org.adorsys.encobject.types.properties.FilesystemConnectionProperties;
+
+import org.adorsys.dfs.connection.api.types.BucketPathEncryptionPassword;
+import org.adorsys.dfs.connection.api.types.connection.FilesystemRootBucketName;
+import org.adorsys.dfs.connection.api.types.properties.BucketPathEncryptionFilenameOnly;
+import org.adorsys.dfs.connection.api.types.properties.FilesystemConnectionProperties;
+import org.adorsys.dfs.connection.impl.pathencryption.BucketPathEncryptingExtendedStoreConnection;
 
 /**
  * Created by peter on 27.09.18.

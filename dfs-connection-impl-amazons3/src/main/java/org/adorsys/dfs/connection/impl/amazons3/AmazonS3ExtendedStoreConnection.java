@@ -1,13 +1,14 @@
-package org.adorsys.cryptoutils.extendendstoreconnection.impl.amazons3;
+package org.adorsys.dfs.connection.impl.amazons3;
 
-import org.adorsys.cryptoutils.extendedstoreconnection.impls.pathencryption.BucketPathEncryptingExtendedStoreConnection;
-import org.adorsys.encobject.types.BucketPathEncryptionPassword;
-import org.adorsys.encobject.types.connection.AmazonS3AccessKey;
-import org.adorsys.encobject.types.connection.AmazonS3Region;
-import org.adorsys.encobject.types.connection.AmazonS3RootBucketName;
-import org.adorsys.encobject.types.connection.AmazonS3SecretKey;
-import org.adorsys.encobject.types.properties.AmazonS3ConnectionProperties;
-import org.adorsys.encobject.types.properties.BucketPathEncryptionFilenameOnly;
+
+import org.adorsys.dfs.connection.api.types.BucketPathEncryptionPassword;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3AccessKey;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3Region;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3RootBucketName;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3SecretKey;
+import org.adorsys.dfs.connection.api.types.properties.AmazonS3ConnectionProperties;
+import org.adorsys.dfs.connection.api.types.properties.BucketPathEncryptionFilenameOnly;
+import org.adorsys.dfs.connection.impl.pathencryption.BucketPathEncryptingExtendedStoreConnection;
 
 import java.net.URL;
 

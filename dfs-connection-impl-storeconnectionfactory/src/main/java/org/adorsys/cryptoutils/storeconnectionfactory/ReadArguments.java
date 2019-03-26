@@ -1,7 +1,7 @@
 package org.adorsys.cryptoutils.storeconnectionfactory;
 
 import org.adorsys.cryptoutils.exceptions.BaseExceptionHandler;
-import org.adorsys.cryptoutils.extendendstoreconnection.impl.amazons3.AmazonS3ParamParser;
+import org.adorsys.dfs.connection.impl.amazons3.AmazonS3ParamParser;
 import org.adorsys.cryptoutils.mongodbstoreconnection.MongoParamParser;
 import org.adorsys.dfs.connection.api.filesystem.FileSystemParamParser;
 import org.adorsys.encobject.types.BucketPathEncryptionPassword;

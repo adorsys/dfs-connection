@@ -1,7 +1,7 @@
 package org.adorsys.dfs.connection.api.filesystem;
 
-import org.adorsys.encobject.types.connection.FilesystemRootBucketName;
-import org.adorsys.encobject.types.properties.FilesystemConnectionProperties;
+import org.adorsys.dfs.connection.api.types.connection.FilesystemRootBucketName;
+import org.adorsys.dfs.connection.api.types.properties.FilesystemConnectionProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

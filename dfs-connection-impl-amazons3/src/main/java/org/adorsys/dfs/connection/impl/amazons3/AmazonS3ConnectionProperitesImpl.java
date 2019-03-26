@@ -1,18 +1,18 @@
-package org.adorsys.cryptoutils.extendendstoreconnection.impl.amazons3;
+package org.adorsys.dfs.connection.impl.amazons3;
 
-import org.adorsys.encobject.types.connection.AmazonS3AccessKey;
-import org.adorsys.encobject.types.connection.AmazonS3Region;
-import org.adorsys.encobject.types.connection.AmazonS3RootBucketName;
-import org.adorsys.encobject.types.connection.AmazonS3SecretKey;
-import org.adorsys.encobject.types.properties.AmazonS3ConnectionProperties;
-import org.adorsys.encobject.types.properties.ConnectionPropertiesImpl;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3AccessKey;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3Region;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3RootBucketName;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3SecretKey;
+import org.adorsys.dfs.connection.api.types.properties.AmazonS3ConnectionProperties;
+import org.adorsys.dfs.connection.api.types.properties.ConnectionPropertiesImpl;
 
 import java.net.URL;
 
 /**
  * Created by peter on 04.10.18.
  */
-public class AmazonS3ConnectionProperitesImpl extends ConnectionPropertiesImpl implements AmazonS3ConnectionProperties{
+public class AmazonS3ConnectionProperitesImpl extends ConnectionPropertiesImpl implements AmazonS3ConnectionProperties {
     private AmazonS3AccessKey amazonS3AccessKey;
     private AmazonS3SecretKey amazonS3SecretKey;
     private AmazonS3Region amazonS3Region = defaultRegion;

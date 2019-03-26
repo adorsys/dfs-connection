@@ -1,4 +1,4 @@
-package org.adorsys.ceph;
+package org.adorsys.dfs.connection.impl.amazons3;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
@@ -9,11 +9,11 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.*;
-import org.adorsys.cryptoutils.exceptions.BaseException;
-import org.adorsys.cryptoutils.exceptions.BaseExceptionHandler;
-import org.adorsys.encobject.types.connection.AmazonS3AccessKey;
-import org.adorsys.encobject.types.connection.AmazonS3SecretKey;
-import org.adorsys.cryptoutils.utils.HexUtil;
+import org.adorsys.common.exceptions.BaseException;
+import org.adorsys.common.exceptions.BaseExceptionHandler;
+import org.adorsys.common.utils.HexUtil;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3AccessKey;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3SecretKey;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

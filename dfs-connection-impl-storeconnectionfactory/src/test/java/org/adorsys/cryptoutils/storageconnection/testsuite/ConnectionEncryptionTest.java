@@ -2,7 +2,7 @@ package org.adorsys.cryptoutils.storageconnection.testsuite;
 
 import org.adorsys.cryptoutils.exceptions.BaseException;
 import org.adorsys.dfs.connection.impl.pathencryption.BucketPathEncryption;
-import org.adorsys.cryptoutils.extendendstoreconnection.impl.amazons3.AmazonS3ExtendedStoreConnection;
+import org.adorsys.dfs.connection.impl.amazons3.AmazonS3ExtendedStoreConnection;
 import org.adorsys.cryptoutils.storeconnectionfactory.ExtendedStoreConnectionFactory;
 import org.adorsys.cryptoutils.storeconnectionfactory.ReadArguments;
 import org.adorsys.encobject.complextypes.BucketDirectory;

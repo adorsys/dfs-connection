@@ -1,11 +1,11 @@
-package org.adorsys.cryptoutils.extendendstoreconnection.impl.amazons3;
+package org.adorsys.dfs.connection.impl.amazons3;
 
-import org.adorsys.encobject.exceptions.ParamParserException;
-import org.adorsys.encobject.types.connection.AmazonS3AccessKey;
-import org.adorsys.encobject.types.connection.AmazonS3Region;
-import org.adorsys.encobject.types.connection.AmazonS3RootBucketName;
-import org.adorsys.encobject.types.connection.AmazonS3SecretKey;
-import org.adorsys.encobject.types.properties.AmazonS3ConnectionProperties;
+import org.adorsys.dfs.connection.api.exceptions.ParamParserException;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3AccessKey;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3Region;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3RootBucketName;
+import org.adorsys.dfs.connection.api.types.connection.AmazonS3SecretKey;
+import org.adorsys.dfs.connection.api.types.properties.AmazonS3ConnectionProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

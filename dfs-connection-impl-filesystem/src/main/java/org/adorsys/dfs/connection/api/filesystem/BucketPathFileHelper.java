@@ -1,8 +1,9 @@
 package org.adorsys.dfs.connection.api.filesystem;
 
-import org.adorsys.encobject.complextypes.BucketDirectory;
-import org.adorsys.encobject.complextypes.BucketPath;
-import org.adorsys.encobject.domain.ObjectHandle;
+
+import org.adorsys.dfs.connection.api.complextypes.BucketDirectory;
+import org.adorsys.dfs.connection.api.complextypes.BucketPath;
+import org.adorsys.dfs.connection.api.domain.ObjectHandle;
 
 import java.io.File;
 
