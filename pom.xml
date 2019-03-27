@@ -3,10 +3,12 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.adorsys</groupId>
 	<artifactId>dfs-connection</artifactId>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
     <name>dfs-connection</name>
     <url>https://github.com/adorsys/dfs-connection</url>
     <packaging>pom</packaging>
+    <description>the parent pom of all dfs connection projects</description>
+
     <scm>
         <connection>scm:git@github.com:adorsys/dfs-connection.git</connection>
         <developerConnection>scm:git:git@github.com:adorsys/dfs-connection.git</developerConnection>
