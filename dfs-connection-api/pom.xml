@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>dfs-connection-api</artifactId>
+    <description>the interface and needed classes of the dfs-connection</description>
 
     <build>
         <finalName>dfs-connection-api</finalName>
