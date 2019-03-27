@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.adorsys</groupId>
+	<groupId>de.adorsys</groupId>
 	<artifactId>dfs-connection</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
     <name>dfs-connection</name>
@@ -43,7 +43,7 @@
         <amazon.aws.version>1.11.409</amazon.aws.version>
         <apache.commons.lang3.version>3.8</apache.commons.lang3.version>
         <catch.exception.version>2.0.0-beta-1</catch.exception.version>
-        <common.basetypes.version>0.0.3</common.basetypes.version>
+        <common.basetypes.version>0.0.6</common.basetypes.version>
     </properties>
 
     <modules>
