@@ -1,0 +1,12 @@
+package de.adorsys.dfs.connection.api.filesystem.exceptions;
+
+import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
+
+/**
+ * Created by peter on 06.02.18 at 15:19.
+ */
+public class FileIsFolderException extends StorageConnectionException {
+    public FileIsFolderException(String message) {
+        super(message);
+    }
+}
