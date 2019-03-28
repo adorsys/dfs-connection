@@ -5,7 +5,7 @@
     <parent>
         <groupId>de.adorsys</groupId>
         <artifactId>dfs-connection</artifactId>
-        <version>0.0.3</version>
+        <version>0.0.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>dfs-connection-impl-amazons3</artifactId>
