@@ -50,10 +50,8 @@
 
     <modules>
         <module>dfs-connection-api</module>
-        <module>dfs-connection-impl-pathencryption</module>
         <module>dfs-connection-impl-amazons3</module>
         <module>dfs-connection-impl-filesystem</module>
-        <module>dfs-connection-impl-mongodb</module>
         <module>dfs-connection-impl-storeconnectionfactory</module>
     </modules>
 

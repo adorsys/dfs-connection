@@ -32,6 +32,7 @@ import de.adorsys.dfs.connection.api.types.connection.AmazonS3AccessKey;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3Region;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3RootBucketName;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3SecretKey;
+import de.adorsys.dfs.connection.api.types.properties.AmazonS3ConnectionProperties;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -49,7 +50,7 @@ import java.util.*;
 /**
  * Created by peter on 17.09.18.
  */
-class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
+public class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
     private final static Logger LOGGER = LoggerFactory.getLogger(RealAmazonS3ExtendedStoreConnection.class);
     private static final Logger SPECIAL_LOGGER = LoggerFactory.getLogger("SPECIAL_LOGGER");
     private AmazonS3 connection = null;
@@ -61,6 +62,10 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
     private BucketDirectory amazonS3RootBucket;
     private BucketDirectory amazonS3RootContainersBucket;
     private AmazonS3Region amazonS3Region;
+
+    public RealAmazonS3ExtendedStoreConnection(AmazonS3ConnectionProperties properties) {
+        this(properties.getUrl(), properties.getAmazonS3AccessKey(), properties.getAmazonS3SecretKey(), properties.getAmazonS3Region(), properties.getAmazonS3RootBucketName());
+    }
 
     public RealAmazonS3ExtendedStoreConnection(URL url,
                                                AmazonS3AccessKey accessKey,

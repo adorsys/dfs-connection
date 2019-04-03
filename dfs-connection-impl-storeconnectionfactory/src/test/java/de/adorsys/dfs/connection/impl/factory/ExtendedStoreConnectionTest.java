@@ -11,7 +11,7 @@ import de.adorsys.dfs.connection.api.service.api.ExtendedStoreConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
-import de.adorsys.dfs.connection.impl.amazons3.AmazonS3ExtendedStoreConnection;
+import de.adorsys.dfs.connection.impl.amazons3.RealAmazonS3ExtendedStoreConnection;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -353,8 +353,8 @@ public class ExtendedStoreConnectionTest {
 
     @Test
     public void deleteDatabase() {
-        if (s instanceof AmazonS3ExtendedStoreConnection) {
-            ((AmazonS3ExtendedStoreConnection) s).cleanDatabase();
+        if (s instanceof RealAmazonS3ExtendedStoreConnection) {
+            ((RealAmazonS3ExtendedStoreConnection) s).cleanDatabase();
         }
     }
 
@@ -370,8 +370,8 @@ public class ExtendedStoreConnectionTest {
          */
         createFilesAndFoldersRecursivly(bd, 2, 2, 5, s);
 
-        if (s instanceof AmazonS3ExtendedStoreConnection) {
-            ((AmazonS3ExtendedStoreConnection) s).showDatabase();
+        if (s instanceof RealAmazonS3ExtendedStoreConnection) {
+            ((RealAmazonS3ExtendedStoreConnection) s).showDatabase();
         }
 
         List<StorageMetadata> listAll = s.list(bd, ListRecursiveFlag.TRUE);
@@ -391,8 +391,8 @@ public class ExtendedStoreConnectionTest {
 
         Assert.assertEquals(filesOnlyAllNew.size() + filesOnly00.size(), filesOnlyAll.size());
 
-        if (s instanceof AmazonS3ExtendedStoreConnection) {
-            ((AmazonS3ExtendedStoreConnection) s).cleanDatabase();
+        if (s instanceof RealAmazonS3ExtendedStoreConnection) {
+            ((RealAmazonS3ExtendedStoreConnection) s).cleanDatabase();
         }
     }
 

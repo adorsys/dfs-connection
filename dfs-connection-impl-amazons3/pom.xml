@@ -94,11 +94,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>de.adorsys</groupId>
-            <artifactId>dfs-connection-impl-pathencryption</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-core</artifactId>
             <version>${amazon.aws.version}</version>

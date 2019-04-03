@@ -7,7 +7,6 @@ import de.adorsys.dfs.connection.api.types.properties.BucketPathEncryptionFilena
 import de.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
 import de.adorsys.dfs.connection.api.types.properties.ConnectionPropertiesImpl;
 import de.adorsys.dfs.connection.impl.amazons3.AmazonS3ParamParser;
-import de.adorsys.dfs.connection.impl.mongodb.MongoParamParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +43,7 @@ public class ReadArguments {
         BucketPathEncryptionFilenameOnly bucketPathEncryptionFilenameOnly = ConnectionProperties.defaultBucketPathEncryptionFilenameOnly;
 
         for (String arg : args) {
-            if (arg.startsWith(MONGO_ARG)) {
-                properties = MongoParamParser.getProperties(arg.substring(MONGO_ARG.length()));
-            } else if (arg.startsWith(AMAZONS3_ARG)) {
+            if (arg.startsWith(AMAZONS3_ARG)) {
                 properties = AmazonS3ParamParser.getProperties(arg.substring(AMAZONS3_ARG.length()));
             } else if (arg.startsWith(FILESYSTEM_ARG)) {
                 properties = FileSystemParamParser.getProperties(arg.substring(FILESYSTEM_ARG.length()));
@@ -88,9 +85,6 @@ public class ReadArguments {
             }
             if (System.getProperty(ENCRYPTION_FILENAME_ONLY) != null) {
                 bucketPathEncryptionFilenameOnly = BucketPathEncryptionFilenameOnly.TRUE;
-            }
-            if (System.getProperty(MONGO) != null) {
-                properties = MongoParamParser.getProperties(System.getProperty(MONGO));
             }
             if (System.getProperty(AMAZONS3) != null) {
                 properties = AmazonS3ParamParser.getProperties(System.getProperty(AMAZONS3));

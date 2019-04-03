@@ -19,6 +19,7 @@ import de.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
 import de.adorsys.dfs.connection.api.types.ExtendedStoreConnectionType;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
 import de.adorsys.dfs.connection.api.types.connection.FilesystemRootBucketName;
+import de.adorsys.dfs.connection.api.types.properties.FilesystemConnectionProperties;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,12 +35,15 @@ import java.util.List;
 /**
  * Created by peter on 06.02.18 at 12:40.
  */
-class RealFileSystemExtendedStorageConnection implements ExtendedStoreConnection {
+public class RealFileSystemExtendedStorageConnection implements ExtendedStoreConnection {
     private final static Logger LOGGER = LoggerFactory.getLogger(RealFileSystemExtendedStorageConnection.class);
     protected final BucketDirectory baseDir;
     private ZipFileHelper zipFileHelper;
     private boolean absolutePath = false;
 
+    public RealFileSystemExtendedStorageConnection(FilesystemConnectionProperties properties) {
+        this(properties.getFilesystemRootBucketName());
+    }
     public RealFileSystemExtendedStorageConnection(FilesystemRootBucketName basedir) {
         try {
             this.baseDir = new BucketDirectory(basedir.getValue());
