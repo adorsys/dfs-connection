@@ -22,7 +22,7 @@ import de.adorsys.dfs.connection.api.domain.StorageMetadata;
 import de.adorsys.dfs.connection.api.domain.StorageType;
 import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
 import de.adorsys.dfs.connection.api.filesystem.StorageMetadataFlattenerGSON;
-import de.adorsys.dfs.connection.api.service.api.ExtendedStoreConnection;
+import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
@@ -50,8 +50,8 @@ import java.util.*;
 /**
  * Created by peter on 17.09.18.
  */
-public class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
-    private final static Logger LOGGER = LoggerFactory.getLogger(RealAmazonS3ExtendedStoreConnection.class);
+public class AmazonS3DFSConnection implements DFSConnection {
+    private final static Logger LOGGER = LoggerFactory.getLogger(AmazonS3DFSConnection.class);
     private static final Logger SPECIAL_LOGGER = LoggerFactory.getLogger("SPECIAL_LOGGER");
     private AmazonS3 connection = null;
     private final static String AMAZONS3_TMP_FILE_PREFIX = "AMAZONS3_TMP_FILE_";
@@ -63,15 +63,15 @@ public class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnect
     private BucketDirectory amazonS3RootContainersBucket;
     private AmazonS3Region amazonS3Region;
 
-    public RealAmazonS3ExtendedStoreConnection(AmazonS3ConnectionProperties properties) {
+    public AmazonS3DFSConnection(AmazonS3ConnectionProperties properties) {
         this(properties.getUrl(), properties.getAmazonS3AccessKey(), properties.getAmazonS3SecretKey(), properties.getAmazonS3Region(), properties.getAmazonS3RootBucketName());
     }
 
-    public RealAmazonS3ExtendedStoreConnection(URL url,
-                                               AmazonS3AccessKey accessKey,
-                                               AmazonS3SecretKey secretKey,
-                                               AmazonS3Region anAmazonS3Region,
-                                               AmazonS3RootBucketName anAmazonS3RootBucketName) {
+    public AmazonS3DFSConnection(URL url,
+                                 AmazonS3AccessKey accessKey,
+                                 AmazonS3SecretKey secretKey,
+                                 AmazonS3Region anAmazonS3Region,
+                                 AmazonS3RootBucketName anAmazonS3RootBucketName) {
         amazonS3Region = anAmazonS3Region;
         amazonS3RootBucket = new BucketDirectory(anAmazonS3RootBucketName.getValue());
         amazonS3RootContainersBucket = new BucketDirectory(amazonS3RootBucket.getObjectHandle().getContainer() + ".containers");

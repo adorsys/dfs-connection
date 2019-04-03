@@ -12,7 +12,7 @@ import de.adorsys.dfs.connection.api.domain.StorageMetadata;
 import de.adorsys.dfs.connection.api.domain.StorageType;
 import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
 import de.adorsys.dfs.connection.api.filesystem.exceptions.*;
-import de.adorsys.dfs.connection.api.service.api.ExtendedStoreConnection;
+import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
@@ -35,16 +35,16 @@ import java.util.List;
 /**
  * Created by peter on 06.02.18 at 12:40.
  */
-public class RealFileSystemExtendedStorageConnection implements ExtendedStoreConnection {
-    private final static Logger LOGGER = LoggerFactory.getLogger(RealFileSystemExtendedStorageConnection.class);
+public class FileSystemDFSConnection implements DFSConnection {
+    private final static Logger LOGGER = LoggerFactory.getLogger(FileSystemDFSConnection.class);
     protected final BucketDirectory baseDir;
     private ZipFileHelper zipFileHelper;
     private boolean absolutePath = false;
 
-    public RealFileSystemExtendedStorageConnection(FilesystemConnectionProperties properties) {
+    public FileSystemDFSConnection(FilesystemConnectionProperties properties) {
         this(properties.getFilesystemRootBucketName());
     }
-    public RealFileSystemExtendedStorageConnection(FilesystemRootBucketName basedir) {
+    public FileSystemDFSConnection(FilesystemRootBucketName basedir) {
         try {
             this.baseDir = new BucketDirectory(basedir.getValue());
             this.absolutePath = (basedir.getValue().startsWith(BucketPath.BUCKET_SEPARATOR));

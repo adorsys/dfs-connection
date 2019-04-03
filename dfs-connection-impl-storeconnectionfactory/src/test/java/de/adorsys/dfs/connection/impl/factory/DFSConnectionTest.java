@@ -7,11 +7,11 @@ import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.StorageMetadata;
 import de.adorsys.dfs.connection.api.domain.StorageType;
 import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
-import de.adorsys.dfs.connection.api.service.api.ExtendedStoreConnection;
+import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
-import de.adorsys.dfs.connection.impl.amazons3.RealAmazonS3ExtendedStoreConnection;
+import de.adorsys.dfs.connection.impl.amazons3.AmazonS3DFSConnection;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,10 +26,10 @@ import java.util.List;
 /**
  * Created by peter on 06.02.18 at 16:45.
  */
-public class ExtendedStoreConnectionTest {
-    private final static Logger LOGGER = LoggerFactory.getLogger(ExtendedStoreConnectionTest.class);
+public class DFSConnectionTest {
+    private final static Logger LOGGER = LoggerFactory.getLogger(DFSConnectionTest.class);
     private List<BucketDirectory> containers = new ArrayList<>();
-    private ExtendedStoreConnection s = ExtendedStoreConnectionFactory.get();
+    private DFSConnection s = ExtendedStoreConnectionFactory.get();
 
     @Before
     public void before() {
@@ -50,7 +50,7 @@ public class ExtendedStoreConnectionTest {
 
     @Test
     public void cleanDB() {
-        ExtendedStoreConnection c = ExtendedStoreConnectionFactory.get();
+        DFSConnection c = ExtendedStoreConnectionFactory.get();
         c.listAllBuckets().forEach(el -> c.deleteContainer(el));
     }
 
@@ -353,8 +353,8 @@ public class ExtendedStoreConnectionTest {
 
     @Test
     public void deleteDatabase() {
-        if (s instanceof RealAmazonS3ExtendedStoreConnection) {
-            ((RealAmazonS3ExtendedStoreConnection) s).cleanDatabase();
+        if (s instanceof AmazonS3DFSConnection) {
+            ((AmazonS3DFSConnection) s).cleanDatabase();
         }
     }
 
@@ -370,8 +370,8 @@ public class ExtendedStoreConnectionTest {
          */
         createFilesAndFoldersRecursivly(bd, 2, 2, 5, s);
 
-        if (s instanceof RealAmazonS3ExtendedStoreConnection) {
-            ((RealAmazonS3ExtendedStoreConnection) s).showDatabase();
+        if (s instanceof AmazonS3DFSConnection) {
+            ((AmazonS3DFSConnection) s).showDatabase();
         }
 
         List<StorageMetadata> listAll = s.list(bd, ListRecursiveFlag.TRUE);
@@ -391,8 +391,8 @@ public class ExtendedStoreConnectionTest {
 
         Assert.assertEquals(filesOnlyAllNew.size() + filesOnly00.size(), filesOnlyAll.size());
 
-        if (s instanceof RealAmazonS3ExtendedStoreConnection) {
-            ((RealAmazonS3ExtendedStoreConnection) s).cleanDatabase();
+        if (s instanceof AmazonS3DFSConnection) {
+            ((AmazonS3DFSConnection) s).cleanDatabase();
         }
     }
 
@@ -598,23 +598,23 @@ public class ExtendedStoreConnectionTest {
 
    /* =========================================================================================================== */
 
-    private void createFiles(ExtendedStoreConnection extendedStoreConnection, BucketDirectory rootDirectory,
+    private void createFiles(DFSConnection DFSConnection, BucketDirectory rootDirectory,
                              int subdirs, int subfiles) {
-        createFilesAndFoldersRecursivly(rootDirectory, subdirs, subfiles, 3, extendedStoreConnection);
+        createFilesAndFoldersRecursivly(rootDirectory, subdirs, subfiles, 3, DFSConnection);
     }
 
     private void createFilesAndFoldersRecursivly(BucketDirectory rootDirectory, int subdirs, int subfiles,
-                                                 int depth, ExtendedStoreConnection extendedStoreConnection) {
+                                                 int depth, DFSConnection DFSConnection) {
         if (depth == 0) {
             return;
         }
 
         for (int i = 0; i < subfiles; i++) {
             byte[] content = ("Affe of file " + i + "").getBytes();
-            extendedStoreConnection.putBlob(rootDirectory.appendName("file" + i), content);
+            DFSConnection.putBlob(rootDirectory.appendName("file" + i), content);
         }
         for (int i = 0; i < subdirs; i++) {
-            createFilesAndFoldersRecursivly(rootDirectory.appendDirectory("subdir" + i), subdirs, subfiles, depth - 1, extendedStoreConnection);
+            createFilesAndFoldersRecursivly(rootDirectory.appendDirectory("subdir" + i), subdirs, subfiles, depth - 1, DFSConnection);
         }
     }
 

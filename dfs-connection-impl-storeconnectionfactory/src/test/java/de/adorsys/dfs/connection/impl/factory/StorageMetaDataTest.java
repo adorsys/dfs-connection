@@ -9,7 +9,7 @@ import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
 import de.adorsys.dfs.connection.api.domain.*;
 import de.adorsys.dfs.connection.api.filesystem.StorageMetadataFlattenerGSON;
-import de.adorsys.dfs.connection.api.service.api.ExtendedStoreConnection;
+import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimpleLocationImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
@@ -36,7 +36,7 @@ public class StorageMetaDataTest {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(StorageMetaDataTest.class);
     private List<BucketDirectory> containers = new ArrayList<>();
-    private ExtendedStoreConnection s = ExtendedStoreConnectionFactory.get();
+    private DFSConnection s = ExtendedStoreConnectionFactory.get();
 
     @Before
     public void before() {

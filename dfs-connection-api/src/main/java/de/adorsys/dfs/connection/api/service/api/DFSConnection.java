@@ -10,7 +10,7 @@ import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
 
 import java.util.List;
 
-public interface ExtendedStoreConnection {
+public interface DFSConnection {
 
     void putBlob(BucketPath bucketPath, Payload payload);
     Payload getBlob(BucketPath bucketPath);
