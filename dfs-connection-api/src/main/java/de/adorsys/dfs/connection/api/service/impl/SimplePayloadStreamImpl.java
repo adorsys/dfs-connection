@@ -1,7 +1,6 @@
 package de.adorsys.dfs.connection.api.service.impl;
 
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
-import de.adorsys.dfs.connection.api.domain.StorageMetadata;
 
 import java.io.InputStream;
 
@@ -10,43 +9,18 @@ import java.io.InputStream;
  */
 public class SimplePayloadStreamImpl implements PayloadStream {
     private InputStream inputStream;
-    private Boolean repeatable;
-    private Boolean sensitive;
-    private SimpleStorageMetadataImpl storageMetadata;
 
-    public SimplePayloadStreamImpl(StorageMetadata storageMetadata, InputStream inputStream) {
-        this(storageMetadata, false, true, inputStream);
-    }
-
-    public SimplePayloadStreamImpl(StorageMetadata storageMetadata, Boolean repeatable, Boolean sensitive, InputStream inputStream) {
+    public SimplePayloadStreamImpl(InputStream inputStream) {
         this.inputStream = inputStream;
-        this.repeatable = repeatable;
-        this.sensitive = sensitive;
-        this.storageMetadata = new SimpleStorageMetadataImpl(storageMetadata);
     }
 
     public SimplePayloadStreamImpl(PayloadStream payloadStream) {
-        this(payloadStream.getStorageMetadata(), payloadStream.isRepeatable(), payloadStream.isSensitive(), payloadStream.openStream());
+        this(payloadStream.openStream());
     }
 
     @Override
     public InputStream openStream() {
         return inputStream;
-    }
-
-    @Override
-    public boolean isRepeatable() {
-        return repeatable;
-    }
-
-    @Override
-    public boolean isSensitive() {
-        return sensitive;
-    }
-
-    @Override
-    public SimpleStorageMetadataImpl getStorageMetadata() {
-        return storageMetadata;
     }
 
 

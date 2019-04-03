@@ -5,7 +5,6 @@ import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
 import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
-import de.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
 import de.adorsys.dfs.connection.api.types.connection.FilesystemRootBucketName;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,7 +30,7 @@ public class AbsoluteAndRelativePathTest {
             Assert.assertFalse(new File(relativeDirAsAbsoluteDir).exists());
             DFSConnection con = new FileSystemDFSConnection(new FilesystemRootBucketName(mydir));
             con.createContainer(new BucketDirectory("home"));
-            con.putBlob(new BucketPath("/home/file1.txt"), new SimplePayloadImpl(new SimpleStorageMetadataImpl(), "affe".getBytes()));
+            con.putBlob(new BucketPath("/home/file1.txt"), new SimplePayloadImpl("affe".getBytes()));
             Assert.assertTrue(new File(relativeDirAsAbsoluteDir).exists());
 
         } catch (Exception e) {
@@ -61,7 +60,7 @@ public class AbsoluteAndRelativePathTest {
             Assert.assertFalse(new File(absoluteDir).exists());
             DFSConnection con = new FileSystemDFSConnection(new FilesystemRootBucketName(absoluteDir));
             con.createContainer(new BucketDirectory("home"));
-            con.putBlob(new BucketPath("/home/file1.txt"), new SimplePayloadImpl(new SimpleStorageMetadataImpl(), "affe".getBytes()));
+            con.putBlob(new BucketPath("/home/file1.txt"), new SimplePayloadImpl("affe".getBytes()));
             LOGGER.debug(absoluteDir);
             Assert.assertTrue(new File(absoluteDir).exists());
 

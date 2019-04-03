@@ -6,8 +6,6 @@ import de.adorsys.dfs.connection.api.complextypes.BucketPath;
 import de.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
 import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
-import de.adorsys.dfs.connection.api.domain.StorageMetadata;
-import de.adorsys.dfs.connection.api.domain.StorageType;
 import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
@@ -29,16 +27,12 @@ import java.util.zip.ZipOutputStream;
  */
 public class ZipFileHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZipFileHelper.class);
-    private static final Logger SPECIAL_LOGGER = LoggerFactory.getLogger("SPECIAL_LOGGER");
-    protected static final String ZIP_STORAGE_METADATA_JSON = "StorageMetadata.json";
     protected static final String ZIP_CONTENT_BINARY = "Content.binary";
     protected static final String ZIP_SUFFIX = ".zip";
-    public static final String CHARSET_NAME = "UTF-8";
     private boolean absolutePath = false;
 
 
     protected BucketDirectory baseDir;
-    protected StorageMetadataFlattenerGSON gsonHelper = new StorageMetadataFlattenerGSON();
 
     public ZipFileHelper(BucketDirectory bucketDirectory, boolean absolutePath) {
         this.baseDir = bucketDirectory;
@@ -51,8 +45,6 @@ public class ZipFileHelper {
     public void writeZip(BucketPath bucketPath, SimplePayloadImpl payload) {
 
         try {
-            payload.getStorageMetadata().setType(StorageType.BLOB);
-            payload.getStorageMetadata().setName(BucketPathUtil.getAsString(bucketPath));
             byte[] content = payload.getData();
 
             createDirectoryIfNecessary(bucketPath);
@@ -63,13 +55,6 @@ public class ZipFileHelper {
             LOGGER.debug("write temporary zip file to " + tempFile);
 
             try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)))) {
-
-                zos.putNextEntry(new ZipEntry(ZIP_STORAGE_METADATA_JSON));
-                String jsonString = gsonHelper.toJson(payload.getStorageMetadata());
-                LOGGER.debug("WRITE metadata " + jsonString + " with charset " + CHARSET_NAME);
-                byte[] storageMetadata = jsonString.getBytes(CHARSET_NAME);
-                zos.write(storageMetadata, 0, storageMetadata.length);
-                zos.closeEntry();
 
                 zos.putNextEntry(new ZipEntry(ZIP_CONTENT_BINARY));
                 zos.write(content, 0, content.length);
@@ -94,12 +79,6 @@ public class ZipFileHelper {
     public void writeZipStream(BucketPath bucketPath, SimplePayloadStreamImpl payloadStream) {
 
         try {
-            payloadStream.getStorageMetadata().setType(StorageType.BLOB);
-            payloadStream.getStorageMetadata().setName(BucketPathUtil.getAsString(bucketPath));
-            String jsonString = gsonHelper.toJson(payloadStream.getStorageMetadata());
-            byte[] storageMetadata = jsonString.getBytes(CHARSET_NAME);
-            LOGGER.debug("WRITE metadata string " + jsonString + "with " + CHARSET_NAME);
-
             createDirectoryIfNecessary(bucketPath);
             File tempFile = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath.add(ZIP_SUFFIX).add("." + UUID.randomUUID().toString())), absolutePath);
             if (tempFile.exists()) {
@@ -108,10 +87,6 @@ public class ZipFileHelper {
             LOGGER.debug("write temporary zip file to " + tempFile);
 
             try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)))) {
-                zos.putNextEntry(new ZipEntry(ZIP_STORAGE_METADATA_JSON));
-                zos.write(storageMetadata, 0, storageMetadata.length);
-                zos.closeEntry();
-
                 try (InputStream is = payloadStream.openStream()) {
                     zos.putNextEntry(new ZipEntry(ZIP_CONTENT_BINARY));
                     IOUtils.copy(is, zos);
@@ -130,12 +105,8 @@ public class ZipFileHelper {
     }
 
 
-    public Payload readZip(BucketPath bucketPath, StorageMetadata storageMetadata) {
+    public Payload readZip(BucketPath bucketPath) {
         try {
-            if (storageMetadata == null) {
-                storageMetadata = readZipMetadataOnly(bucketPath);
-            }
-
             File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath.add(ZIP_SUFFIX)), absolutePath);
             try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)))) {
                 ZipEntry entry;
@@ -149,7 +120,7 @@ public class ZipFileHelper {
                 if (data == null) {
                     throw new StorageConnectionException("Zipfile " + bucketPath + " does not have entry for " + ZIP_CONTENT_BINARY);
                 }
-                Payload payload = new SimplePayloadImpl(storageMetadata, data);
+                Payload payload = new SimplePayloadImpl(data);
                 return payload;
             }
         } catch (Exception e) {
@@ -157,19 +128,15 @@ public class ZipFileHelper {
         }
     }
 
-    public PayloadStream readZipStream(BucketPath bucketPath, StorageMetadata storageMetadata) {
+    public PayloadStream readZipStream(BucketPath bucketPath) {
         try {
-            if (storageMetadata == null) {
-                storageMetadata = readZipMetadataOnly(bucketPath);
-            }
-
             File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath.add(ZIP_SUFFIX)), absolutePath);
             ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)));
 
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 if (entry.getName().equals(ZIP_CONTENT_BINARY)) {
-                    return new SimplePayloadStreamImpl(storageMetadata, zis);
+                    return new SimplePayloadStreamImpl(zis);
                 }
                 zis.closeEntry();
             }
@@ -177,37 +144,6 @@ public class ZipFileHelper {
 
         } catch (Exception e) {
             throw BaseExceptionHandler.handle(e);
-        }
-    }
-
-    public StorageMetadata readZipMetadataOnly(BucketPath bucketPath) {
-        SPECIAL_LOGGER.debug("readmetadata " + bucketPath); // Dies LogZeile ist fuer den JUNIT-Tests StorageMetaDataTest
-        try {
-            File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath.add(ZIP_SUFFIX)), absolutePath);
-            if (!file.exists()) {
-                throw new FileNotFoundException("File does not exist" + bucketPath);
-            }
-
-            try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)))) {
-                ZipEntry entry;
-                String jsonString = null;
-                while ((entry = zis.getNextEntry()) != null) {
-                    if (entry.getName().equals(ZIP_STORAGE_METADATA_JSON)) {
-                        jsonString = new String(IOUtils.toByteArray(zis), CHARSET_NAME);
-                        LOGGER.debug("READ metadata string " + jsonString + "with " + CHARSET_NAME);
-                    }
-                    zis.closeEntry();
-                }
-                if (jsonString == null) {
-                    throw new StorageConnectionException("Zipfile " + bucketPath + " does not have entry for " + ZIP_STORAGE_METADATA_JSON);
-                }
-
-                StorageMetadata storageMetadata = gsonHelper.fromJson(jsonString);
-                return storageMetadata;
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
