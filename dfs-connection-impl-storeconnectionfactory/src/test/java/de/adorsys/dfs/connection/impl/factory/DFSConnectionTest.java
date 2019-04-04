@@ -1,14 +1,20 @@
 package de.adorsys.dfs.connection.impl.factory;
 
 import de.adorsys.common.exceptions.BaseExceptionHandler;
+import de.adorsys.common.utils.HexUtil;
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
 import de.adorsys.dfs.connection.api.domain.Payload;
+import de.adorsys.dfs.connection.api.domain.PayloadStream;
 import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
 import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
+import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
 import de.adorsys.dfs.connection.impl.amazons3.AmazonS3DFSConnection;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,6 +22,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +32,7 @@ import java.util.List;
 /**
  * Created by peter on 06.02.18 at 16:45.
  */
+@Slf4j
 public class DFSConnectionTest {
     private final static Logger LOGGER = LoggerFactory.getLogger(DFSConnectionTest.class);
     private List<BucketDirectory> containers = new ArrayList<>();
@@ -150,7 +160,7 @@ public class DFSConnectionTest {
         {
             List<BucketPath> files = s.list(bd.appendDirectory("empty1/empty2"), ListRecursiveFlag.FALSE);
             LOGGER.debug(showBucketPath(files));
-           
+
             Assert.assertEquals(1, files.size());
             Assert.assertTrue(s.blobExists(file));
         }
@@ -162,7 +172,7 @@ public class DFSConnectionTest {
     @Test
     public void testList1() {
         List<BucketPath> files = s.list(new BucketDirectory("abc"), ListRecursiveFlag.FALSE);
-       
+
         Assert.assertEquals(0, files.size());
     }
 
@@ -206,10 +216,11 @@ public class DFSConnectionTest {
             }
 
             byte[] filecontent = "Inhalt".getBytes();
-            s.putBlob(file,new SimplePayloadImpl(filecontent));
+            s.putBlob(file, new SimplePayloadImpl(filecontent));
 
             List<BucketPath> files = s.list(bd, ListRecursiveFlag.FALSE);
-           
+            LOGGER.debug(showBucketPath(files));
+
             Assert.assertEquals(1, files.size());
             Assert.assertTrue(s.blobExists(file));
 
@@ -230,7 +241,7 @@ public class DFSConnectionTest {
 
         List<BucketPath> files = s.list(bd, ListRecursiveFlag.FALSE);
         LOGGER.debug(showBucketPath(files));
-       
+
         Assert.assertEquals(0, files.size());
     }
 
@@ -248,7 +259,7 @@ public class DFSConnectionTest {
         s.putBlob(file, new SimplePayloadImpl("Inhalt".getBytes()));
         BucketDirectory bdtrick = new BucketDirectory(file);
         List<BucketPath> files = s.list(bdtrick, ListRecursiveFlag.FALSE);
-       
+
         Assert.assertEquals(0, files.size());
     }
 
@@ -325,7 +336,7 @@ public class DFSConnectionTest {
             ((AmazonS3DFSConnection) s).showDatabase();
         }
 
-        List<BucketPath> filesOnlyAll  = s.list(bd, ListRecursiveFlag.TRUE);
+        List<BucketPath> filesOnlyAll = s.list(bd, ListRecursiveFlag.TRUE);
         LOGGER.debug("number of all files under " + bd + " is " + filesOnlyAll.size());
 
         BucketDirectory bd00 = bd.appendDirectory("subdir0/subdir0");
@@ -517,8 +528,30 @@ public class DFSConnectionTest {
         }
     }
 
+    @Test
+    public void saveAndReadStreamTest() {
+        try {
+            BucketPath bucketPath = new BucketPath("user1/.hidden/Affenfile.txt");
+            byte[] content = "Affe".getBytes();
+            s.createContainer(bucketPath.getBucketDirectory());
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(content)) {
+                s.putBlobStream(bucketPath, new SimplePayloadStreamImpl(bis));
+                LOGGER.info("successfully stored stream content: " + HexUtil.convertBytesToHexString(content));
+            }
+            PayloadStream blobStream = s.getBlobStream(bucketPath);
+            byte[] readContent = null;
+            try (InputStream is = blobStream.openStream()) {
+                readContent = IOUtils.toByteArray(is);
+            }
 
-   /* =========================================================================================================== */
+            Assert.assertArrayEquals(content, readContent);
+            s.deleteContainer(bucketPath.getBucketDirectory());
+
+        } catch (Exception e) {
+            throw BaseExceptionHandler.handle(e);
+        }
+    }
+    /* =========================================================================================================== */
 
     private void createFiles(DFSConnection DFSConnection, BucketDirectory rootDirectory,
                              int subdirs, int subfiles) {

@@ -5,7 +5,6 @@ import de.adorsys.common.exceptions.BaseExceptionHandler;
 import de.adorsys.common.utils.Frame;
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
-import de.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
 import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
 import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
@@ -35,7 +34,7 @@ import java.util.List;
 public class FileSystemDFSConnection implements DFSConnection {
     private final static Logger LOGGER = LoggerFactory.getLogger(FileSystemDFSConnection.class);
     protected final BucketDirectory baseDir;
-    private ZipFileHelper zipFileHelper;
+    private FileHelper fileHelper;
     private boolean absolutePath = false;
 
     public FileSystemDFSConnection(FilesystemConnectionProperties properties) {
@@ -58,7 +57,7 @@ public class FileSystemDFSConnection implements DFSConnection {
             }
             LOGGER.info(frame.toString());
 
-            this.zipFileHelper = new ZipFileHelper(this.baseDir, absolutePath);
+            this.fileHelper = new FileHelper(this.baseDir, absolutePath);
         } catch (Exception e) {
             throw BaseExceptionHandler.handle(e);
         }
@@ -115,7 +114,7 @@ public class FileSystemDFSConnection implements DFSConnection {
     @Override
     public boolean blobExists(BucketPath bucketPath) {
         LOGGER.debug("blobExists " + bucketPath);
-        File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath.add(ZipFileHelper.ZIP_SUFFIX)), absolutePath);
+        File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath), absolutePath);
         if (file.isDirectory()) {
             throw new FileIsFolderException("file " + file);
         }
@@ -135,16 +134,11 @@ public class FileSystemDFSConnection implements DFSConnection {
         if (!base.isDirectory()) {
             return result;
         }
-        String[] extensions = new String[1];
-        extensions[0] = ZipFileHelper.ZIP_SUFFIX.substring(1);
-        Collection<File> files = FileUtils.listFiles(base, extensions, listRecursiveFlag.equals(ListRecursiveFlag.TRUE));
+        Collection<File> files = FileUtils.listFiles(base, null, listRecursiveFlag.equals(ListRecursiveFlag.TRUE));
         int lengthToSkip = BucketPathFileHelper.getAsFile(baseDir, absolutePath).getPath().length();
-        int extToSkip = ZipFileHelper.ZIP_SUFFIX.length();
         for(File file: files) {
             String filenameWithExtension = file.getPath().substring(lengthToSkip);
-            String filenameWithoutExtension = filenameWithExtension.substring(0,filenameWithExtension.length()-extToSkip);
-
-            result.add(new BucketPath(filenameWithoutExtension));
+            result.add(new BucketPath(filenameWithExtension));
         }
         return result;
     }
@@ -174,21 +168,21 @@ public class FileSystemDFSConnection implements DFSConnection {
     public void putBlob(BucketPath bucketPath, Payload payload) {
         LOGGER.debug("putBlob " + bucketPath);
         checkContainerExists(bucketPath);
-        zipFileHelper.writeZip(bucketPath, new SimplePayloadImpl(payload));
+        fileHelper.writePayload(bucketPath, new SimplePayloadImpl(payload));
     }
 
     @Override
     public Payload getBlob(BucketPath bucketPath) {
         LOGGER.debug("getBlob " + bucketPath);
         checkContainerExists(bucketPath);
-        return zipFileHelper.readZip(bucketPath);
+        return fileHelper.readPayload(bucketPath);
     }
 
     @Override
     public void putBlobStream(BucketPath bucketPath, PayloadStream payloadStream) {
         LOGGER.debug("putBlobStream " + bucketPath);
         checkContainerExists(bucketPath);
-        zipFileHelper.writeZipStream(bucketPath, new SimplePayloadStreamImpl(payloadStream));
+        fileHelper.writePayloadStream(bucketPath, new SimplePayloadStreamImpl(payloadStream));
 
     }
 
@@ -196,14 +190,14 @@ public class FileSystemDFSConnection implements DFSConnection {
     public PayloadStream getBlobStream(BucketPath bucketPath) {
         LOGGER.debug("getBlobStrea " + bucketPath);
         checkContainerExists(bucketPath);
-        return zipFileHelper.readZipStream(bucketPath);
+        return fileHelper.readPayloadStream(bucketPath);
     }
 
     @Override
     public void removeBlob(BucketPath bucketPath) {
         LOGGER.debug("removeBlob " + bucketPath);
         checkContainerExists(bucketPath);
-        File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath).add(ZipFileHelper.ZIP_SUFFIX), absolutePath);
+        File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath), absolutePath);
         if (!file.exists()) {
             return;
         }
