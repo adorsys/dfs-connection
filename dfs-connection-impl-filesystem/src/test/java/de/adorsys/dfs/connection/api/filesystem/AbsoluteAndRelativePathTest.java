@@ -3,11 +3,9 @@ package de.adorsys.dfs.connection.api.filesystem;
 import de.adorsys.common.exceptions.BaseExceptionHandler;
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
+import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
-import de.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
 import de.adorsys.dfs.connection.api.types.connection.FilesystemRootBucketName;
-import de.adorsys.dfs.connection.api.types.properties.BucketPathEncryptionFilenameOnly;
-import de.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -30,9 +28,9 @@ public class AbsoluteAndRelativePathTest {
             String relativeDirAsAbsoluteDir = currentDir + BucketPath.BUCKET_SEPARATOR + mydir;
             LOGGER.debug("relative Dir to be created is (absoute):" + relativeDirAsAbsoluteDir);
             Assert.assertFalse(new File(relativeDirAsAbsoluteDir).exists());
-            FileSystemExtendedStorageConnection con = new FileSystemExtendedStorageConnection(new FilesystemRootBucketName(mydir), ConnectionProperties.defaultEncryptionPassword, BucketPathEncryptionFilenameOnly.FALSE);
+            DFSConnection con = new FileSystemDFSConnection(new FilesystemRootBucketName(mydir));
             con.createContainer(new BucketDirectory("home"));
-            con.putBlob(new BucketPath("/home/file1.txt"), new SimplePayloadImpl(new SimpleStorageMetadataImpl(), "affe".getBytes()));
+            con.putBlob(new BucketPath("/home/file1.txt"), new SimplePayloadImpl("affe".getBytes()));
             Assert.assertTrue(new File(relativeDirAsAbsoluteDir).exists());
 
         } catch (Exception e) {
@@ -60,9 +58,9 @@ public class AbsoluteAndRelativePathTest {
             String absoluteDir = tmpdir + "target" + BucketPath.BUCKET_SEPARATOR + UUID.randomUUID().toString();
             LOGGER.debug("my absolute path " + absoluteDir);
             Assert.assertFalse(new File(absoluteDir).exists());
-            FileSystemExtendedStorageConnection con = new FileSystemExtendedStorageConnection(new FilesystemRootBucketName(absoluteDir), ConnectionProperties.defaultEncryptionPassword, BucketPathEncryptionFilenameOnly.FALSE);
+            DFSConnection con = new FileSystemDFSConnection(new FilesystemRootBucketName(absoluteDir));
             con.createContainer(new BucketDirectory("home"));
-            con.putBlob(new BucketPath("/home/file1.txt"), new SimplePayloadImpl(new SimpleStorageMetadataImpl(), "affe".getBytes()));
+            con.putBlob(new BucketPath("/home/file1.txt"), new SimplePayloadImpl("affe".getBytes()));
             LOGGER.debug(absoluteDir);
             Assert.assertTrue(new File(absoluteDir).exists());
 

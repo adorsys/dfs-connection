@@ -9,29 +9,25 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.*;
-import de.adorsys.common.utils.Frame;
 import de.adorsys.common.exceptions.BaseException;
 import de.adorsys.common.exceptions.BaseExceptionHandler;
-import de.adorsys.common.utils.HexUtil;
+import de.adorsys.common.utils.Frame;
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
 import de.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
 import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
-import de.adorsys.dfs.connection.api.domain.StorageMetadata;
-import de.adorsys.dfs.connection.api.domain.StorageType;
 import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
-import de.adorsys.dfs.connection.api.filesystem.StorageMetadataFlattenerGSON;
-import de.adorsys.dfs.connection.api.service.api.ExtendedStoreConnection;
+import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
-import de.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
 import de.adorsys.dfs.connection.api.types.ExtendedStoreConnectionType;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3AccessKey;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3Region;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3RootBucketName;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3SecretKey;
+import de.adorsys.dfs.connection.api.types.properties.AmazonS3ConnectionProperties;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -44,29 +40,35 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by peter on 17.09.18.
  */
-class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
-    private final static Logger LOGGER = LoggerFactory.getLogger(RealAmazonS3ExtendedStoreConnection.class);
+public class AmazonS3DFSConnection implements DFSConnection {
+    private final static Logger LOGGER = LoggerFactory.getLogger(AmazonS3DFSConnection.class);
     private static final Logger SPECIAL_LOGGER = LoggerFactory.getLogger("SPECIAL_LOGGER");
     private AmazonS3 connection = null;
     private final static String AMAZONS3_TMP_FILE_PREFIX = "AMAZONS3_TMP_FILE_";
     private final static String AMAZONS3_TMP_FILE_SUFFIX = "";
     private static final String STORAGE_METADATA_KEY = "StorageMetadata";
-    private StorageMetadataFlattenerGSON gsonHelper = new StorageMetadataFlattenerGSON();
     private final static int AMAZON_S3_META_LIMIT = 1024 * 2;
     private BucketDirectory amazonS3RootBucket;
     private BucketDirectory amazonS3RootContainersBucket;
     private AmazonS3Region amazonS3Region;
 
-    public RealAmazonS3ExtendedStoreConnection(URL url,
-                                               AmazonS3AccessKey accessKey,
-                                               AmazonS3SecretKey secretKey,
-                                               AmazonS3Region anAmazonS3Region,
-                                               AmazonS3RootBucketName anAmazonS3RootBucketName) {
+    public AmazonS3DFSConnection(AmazonS3ConnectionProperties properties) {
+        this(properties.getUrl(), properties.getAmazonS3AccessKey(), properties.getAmazonS3SecretKey(), properties.getAmazonS3Region(), properties.getAmazonS3RootBucketName());
+    }
+
+    public AmazonS3DFSConnection(URL url,
+                                 AmazonS3AccessKey accessKey,
+                                 AmazonS3SecretKey secretKey,
+                                 AmazonS3Region anAmazonS3Region,
+                                 AmazonS3RootBucketName anAmazonS3RootBucketName) {
         amazonS3Region = anAmazonS3Region;
         amazonS3RootBucket = new BucketDirectory(anAmazonS3RootBucketName.getValue());
         amazonS3RootContainersBucket = new BucketDirectory(amazonS3RootBucket.getObjectHandle().getContainer() + ".containers");
@@ -118,22 +120,16 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
     public void putBlob(BucketPath bucketPath, Payload payload) {
         LOGGER.debug("putBlob " + bucketPath);
         InputStream inputStream = new ByteArrayInputStream(payload.getData());
-        PayloadStream payloadStream = new SimplePayloadStreamImpl(payload.getStorageMetadata(), inputStream);
+        PayloadStream payloadStream = new SimplePayloadStreamImpl(inputStream);
         putBlobStreamWithMemory(bucketPath, payloadStream, payload.getData().length);
     }
 
     @Override
     public Payload getBlob(BucketPath bucketPath) {
-        return getBlob(bucketPath, null);
-    }
-
-    @Override
-    public Payload getBlob(BucketPath bucketPath, StorageMetadata storageMetadata) {
-        // die hier bereits mitgegebenen StorageMetadata werden dennoch erneut gelesen. Ist im Interface so vorgesehen.
         try {
             PayloadStream payloadStream = getBlobStream(bucketPath);
             byte[] content = IOUtils.toByteArray(payloadStream.openStream());
-            Payload payload = new SimplePayloadImpl(payloadStream.getStorageMetadata(), content);
+            Payload payload = new SimplePayloadImpl(content);
             return payload;
         } catch (Exception e) {
             throw BaseExceptionHandler.handle(e);
@@ -146,43 +142,16 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
     }
 
     @Override
-    public PayloadStream getBlobStream(BucketPath bucketPath) {
-        // die hier bereits mitgegebenen StorageMetadata werden dennoch erneut gelesen. Ist im CephInterface so vorgesehen.
-        return getBlobStream(bucketPath, null);
-    }
-
-    @Override
-    public PayloadStream getBlobStream(BucketPath abucketPath, StorageMetadata storageMetadata) {
+    public PayloadStream getBlobStream(BucketPath abucketPath) {
         LOGGER.debug("getBlobStream " + abucketPath);
         BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
 
         GetObjectRequest getObjectRequest = new GetObjectRequest(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName());
         S3Object object = connection.getObject(getObjectRequest);
         S3ObjectInputStream objectContent = object.getObjectContent();
-        StorageMetadata storageMetadata2 = getStorageMetadataFromObjectdata(object.getObjectMetadata(), abucketPath);
-        PayloadStream payloadStream = new SimplePayloadStreamImpl(storageMetadata2, objectContent);
+        PayloadStream payloadStream = new SimplePayloadStreamImpl(objectContent);
         LOGGER.debug("read ok for " + bucketPath);
         return payloadStream;
-    }
-
-    @Override
-    public void putBlob(BucketPath bucketPath, byte[] bytes) {
-        LOGGER.debug("putBlob " + bucketPath);
-        putBlob(bucketPath, new SimplePayloadImpl(new SimpleStorageMetadataImpl(), bytes));
-    }
-
-    @Override
-    public StorageMetadata getStorageMetadata(BucketPath abucketPath) {
-        SPECIAL_LOGGER.debug("readmetadata " + abucketPath); // Dies LogZeile ist fuer den JUNIT-Tests StorageMetaDataTest
-        LOGGER.debug("getStorageMetadata " + abucketPath);
-        BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
-
-        GetObjectMetadataRequest getObjectMetadataRequest = new GetObjectMetadataRequest(
-                bucketPath.getObjectHandle().getContainer(),
-                bucketPath.getObjectHandle().getName());
-        ObjectMetadata objectMetadata = connection.getObjectMetadata(getObjectMetadataRequest);
-        StorageMetadata storageMetadata = getStorageMetadataFromObjectdata(objectMetadata, abucketPath);
-        return storageMetadata;
     }
 
     @Override
@@ -271,9 +240,9 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
     }
 
     @Override
-    public List<StorageMetadata> list(BucketDirectory abucketDirectory, ListRecursiveFlag listRecursiveFlag) {
+    public List<BucketPath> list(BucketDirectory abucketDirectory, ListRecursiveFlag listRecursiveFlag) {
         LOGGER.debug("list " + abucketDirectory);
-        List<StorageMetadata> returnList = new ArrayList<>();
+        List<BucketPath> returnList = new ArrayList<>();
         if (!containerExists(abucketDirectory)) {
             LOGGER.debug("return empty list for " + abucketDirectory);
             return returnList;
@@ -301,9 +270,6 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
         final List<String> keys = new ArrayList<>();
         ol.getObjectSummaries().forEach(el -> keys.add(BucketPath.BUCKET_SEPARATOR + el.getKey()));
         returnList = filter(container, prefix, keys, listRecursiveFlag);
-        if (LOGGER.isTraceEnabled()) {
-            returnList.forEach(el -> LOGGER.trace("return for " + abucketDirectory + " :" + el.getName() + " type " + el.getType()));
-        }
         return returnList;
     }
 
@@ -343,8 +309,8 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
 
     // ==========================================================================
 
-    List<StorageMetadata> filter(String container, String prefix, final List<String> keys, ListRecursiveFlag recursive) {
-        List<StorageMetadata> result = new ArrayList<>();
+    List<BucketPath> filter(String container, String prefix, final List<String> keys, ListRecursiveFlag recursive) {
+        List<BucketPath> result = new ArrayList<>();
         Set<String> dirs = new HashSet<>();
 
         // showKeys(keys);
@@ -356,11 +322,11 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
 
         keys.forEach(key -> {
             if (recursive.equals(ListRecursiveFlag.TRUE)) {
-                result.add(getStorageMetadata(new BucketPath(key)));
+                result.add(new BucketPath(key));
             } else {
                 int numberOfDelimitersOfKey = StringUtils.countMatches(key, BucketPath.BUCKET_SEPARATOR);
                 if (numberOfDelimitersOfKey == numberOfDelimitersExpected) {
-                    result.add(getStorageMetadata(new BucketPath(key)));
+                    result.add(new BucketPath(key));
                 }
             }
 
@@ -393,18 +359,7 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
             }
 
         });
-        {
-            // Auch wenn kein file gefunden wurde, das Verzeichnis exisitiert und ist daher zurückzugeben
-            dirs.add(prefix);
-        }
-
-        for (String dir : dirs) {
-            SimpleStorageMetadataImpl storageMetadata = new SimpleStorageMetadataImpl();
-            storageMetadata.setType(StorageType.FOLDER);
-            storageMetadata.setName(BucketPathUtil.getAsString(new BucketDirectory(new BucketPath(dir))));
-            result.add(storageMetadata);
-        }
-        // showResult(result);
+        showResult(result);
         return result;
     }
 
@@ -412,10 +367,7 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
     private void putBlobStreamWithMemory(BucketPath abucketPath, PayloadStream payloadStream, int size) {
         try {
             LOGGER.debug("putBlobStreamWithMemory " + abucketPath + " with known length " + size);
-            SimpleStorageMetadataImpl storageMetadata = new SimpleStorageMetadataImpl(payloadStream.getStorageMetadata());
-            storageMetadata.setName(BucketPathUtil.getAsString(abucketPath));
-            storageMetadata.setType(StorageType.BLOB);
-            ObjectMetadata objectMetadata = geteObjectMetadataFromStorageMetadata(storageMetadata);
+            ObjectMetadata objectMetadata = new ObjectMetadata();
             objectMetadata.setContentLength(size);
 
             BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
@@ -445,10 +397,7 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
 
             LOGGER.debug(abucketPath + " with tmpfile " + targetFile.getAbsolutePath() + " written with " + targetFile.length() + " bytes -> will now be copied to ceph");
             try (FileInputStream fis = new FileInputStream(targetFile)) {
-                SimpleStorageMetadataImpl storageMetadata = new SimpleStorageMetadataImpl(payloadStream.getStorageMetadata());
-                storageMetadata.setName(BucketPathUtil.getAsString(abucketPath));
-                storageMetadata.setType(StorageType.BLOB);
-                ObjectMetadata objectMetadata = geteObjectMetadataFromStorageMetadata(storageMetadata);
+                ObjectMetadata objectMetadata = new ObjectMetadata();
                 objectMetadata.setContentLength(targetFile.length());
 
                 BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
@@ -462,43 +411,6 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
         } catch (Exception e) {
             throw BaseExceptionHandler.handle(e);
         }
-    }
-
-    // Ceph speichert die UserMetaData im header des Requests. Dadurch sind sie
-    // - caseInsensitive
-    // - längenbeschränkt
-    // Abgesehen davon gibt es auch Probleme den JsonsString direkt zu übernehmen. Die Excpion beim Put verrät allerdings nicht,
-    // was für Probleme das sind. Daher werden die Metadaten in einen lesbaren ByteCode umgewandelt.
-    private ObjectMetadata geteObjectMetadataFromStorageMetadata(SimpleStorageMetadataImpl storageMetadata) {
-        String metadataAsString = gsonHelper.toJson(storageMetadata);
-        String metadataAsHexString = HexUtil.convertBytesToHexString(metadataAsString.getBytes());
-        Map<String, String> userMetaData = new HashMap<>();
-        userMetaData.put(STORAGE_METADATA_KEY, metadataAsHexString);
-        int sizeOfMetadataHexString = metadataAsHexString.length();
-        if (sizeOfMetadataHexString > AMAZON_S3_META_LIMIT) {
-            throw new BaseException("Die Metadaten haben im HexFormat eine Länge von " + sizeOfMetadataHexString + ". Das Limit liegt aber bei " + AMAZON_S3_META_LIMIT + ". Der original String der Daten ist " + metadataAsString.length() + " Zeichen groß. Hier die Daten:" + metadataAsString);
-        } else {
-            LOGGER.debug("SIZE OF METADATA IS IN HEXFORMAT " + sizeOfMetadataHexString);
-        }
-        ObjectMetadata objectMetadata = new ObjectMetadata();
-        objectMetadata.setUserMetadata(userMetaData);
-        return objectMetadata;
-    }
-
-    private StorageMetadata getStorageMetadataFromObjectdata(ObjectMetadata objectMetadata, BucketPath bucketPath) {
-        String metadataAsHexString = objectMetadata.getUserMetadata().get(STORAGE_METADATA_KEY);
-        if (metadataAsHexString == null) {
-            throw new BaseException("UserData do not contain mandatory " + STORAGE_METADATA_KEY + " for " + bucketPath);
-/*
-            LOGGER.error ("UserData do not contain mandatory " + STORAGE_METADATA_KEY + " for " + bucketPath);
-            SimpleStorageMetadataImpl storageMetadata = new SimpleStorageMetadataImpl();
-            storageMetadata.setType(StorageType.BLOB);
-            storageMetadata.setName(BucketPathUtil.getAsString(bucketPath));
-            return storageMetadata;
-            */
-        }
-        String metadataAsString = new String(HexUtil.convertHexStringToBytes(metadataAsHexString));
-        return gsonHelper.fromJson(metadataAsString);
     }
 
     /**
@@ -554,10 +466,10 @@ class RealAmazonS3ExtendedStoreConnection implements ExtendedStoreConnection {
         }
     }
 
-    private void showResult(List<StorageMetadata> result) {
+    private void showResult(List<BucketPath> result) {
         LOGGER.info("nachher:");
         result.forEach(el -> {
-            LOGGER.info(el.getName() + " (" + el.getType() + ")");
+            LOGGER.info(el.toString());
         });
     }
 

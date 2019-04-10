@@ -46,14 +46,13 @@
         <apache.commons.lang3.version>3.8</apache.commons.lang3.version>
         <catch.exception.version>2.0.0-beta-1</catch.exception.version>
         <common.basetypes.version>0.0.7</common.basetypes.version>
+        <lombok.version>1.16.18</lombok.version>
     </properties>
 
     <modules>
         <module>dfs-connection-api</module>
-        <module>dfs-connection-impl-pathencryption</module>
         <module>dfs-connection-impl-amazons3</module>
         <module>dfs-connection-impl-filesystem</module>
-        <module>dfs-connection-impl-mongodb</module>
         <module>dfs-connection-impl-storeconnectionfactory</module>
     </modules>
 

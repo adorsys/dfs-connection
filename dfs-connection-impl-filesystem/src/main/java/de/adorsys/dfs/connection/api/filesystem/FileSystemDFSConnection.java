@@ -1,24 +1,21 @@
 package de.adorsys.dfs.connection.api.filesystem;
 
-import de.adorsys.common.utils.Frame;
 import de.adorsys.common.exceptions.BaseException;
 import de.adorsys.common.exceptions.BaseExceptionHandler;
+import de.adorsys.common.utils.Frame;
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
-import de.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
 import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
-import de.adorsys.dfs.connection.api.domain.StorageMetadata;
-import de.adorsys.dfs.connection.api.domain.StorageType;
 import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
 import de.adorsys.dfs.connection.api.filesystem.exceptions.*;
-import de.adorsys.dfs.connection.api.service.api.ExtendedStoreConnection;
+import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
-import de.adorsys.dfs.connection.api.service.impl.SimpleStorageMetadataImpl;
 import de.adorsys.dfs.connection.api.types.ExtendedStoreConnectionType;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
 import de.adorsys.dfs.connection.api.types.connection.FilesystemRootBucketName;
+import de.adorsys.dfs.connection.api.types.properties.FilesystemConnectionProperties;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,13 +31,16 @@ import java.util.List;
 /**
  * Created by peter on 06.02.18 at 12:40.
  */
-class RealFileSystemExtendedStorageConnection implements ExtendedStoreConnection {
-    private final static Logger LOGGER = LoggerFactory.getLogger(RealFileSystemExtendedStorageConnection.class);
+public class FileSystemDFSConnection implements DFSConnection {
+    private final static Logger LOGGER = LoggerFactory.getLogger(FileSystemDFSConnection.class);
     protected final BucketDirectory baseDir;
-    private ZipFileHelper zipFileHelper;
+    private FileHelper fileHelper;
     private boolean absolutePath = false;
 
-    public RealFileSystemExtendedStorageConnection(FilesystemRootBucketName basedir) {
+    public FileSystemDFSConnection(FilesystemConnectionProperties properties) {
+        this(properties.getFilesystemRootBucketName());
+    }
+    public FileSystemDFSConnection(FilesystemRootBucketName basedir) {
         try {
             this.baseDir = new BucketDirectory(basedir.getValue());
             this.absolutePath = (basedir.getValue().startsWith(BucketPath.BUCKET_SEPARATOR));
@@ -57,7 +57,7 @@ class RealFileSystemExtendedStorageConnection implements ExtendedStoreConnection
             }
             LOGGER.info(frame.toString());
 
-            this.zipFileHelper = new ZipFileHelper(this.baseDir, absolutePath);
+            this.fileHelper = new FileHelper(this.baseDir, absolutePath);
         } catch (Exception e) {
             throw BaseExceptionHandler.handle(e);
         }
@@ -112,16 +112,9 @@ class RealFileSystemExtendedStorageConnection implements ExtendedStoreConnection
     }
 
     @Override
-    public void putBlob(BucketPath bucketPath, byte[] bytes) {
-        LOGGER.debug("putBlob " + bucketPath);
-        Payload payload = new SimplePayloadImpl(bytes);
-        putBlob(bucketPath, payload);
-    }
-
-    @Override
     public boolean blobExists(BucketPath bucketPath) {
         LOGGER.debug("blobExists " + bucketPath);
-        File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath.add(ZipFileHelper.ZIP_SUFFIX)), absolutePath);
+        File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath), absolutePath);
         if (file.isDirectory()) {
             throw new FileIsFolderException("file " + file);
         }
@@ -134,18 +127,19 @@ class RealFileSystemExtendedStorageConnection implements ExtendedStoreConnection
     }
 
     @Override
-    public List<StorageMetadata> list(BucketDirectory bucketDirectory, ListRecursiveFlag listRecursiveFlag) {
+    public List<BucketPath> list(BucketDirectory bucketDirectory, ListRecursiveFlag listRecursiveFlag) {
         LOGGER.debug("list " + bucketDirectory);
-        List<StorageMetadata> result = new ArrayList<>();
-        File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketDirectory), absolutePath);
-        if (!file.exists()) {
+        List<BucketPath> result = new ArrayList<>();
+        File base = BucketPathFileHelper.getAsFile(baseDir.append(bucketDirectory), absolutePath);
+        if (!base.isDirectory()) {
             return result;
         }
-        if (!file.isDirectory()) {
-            return result;
+        Collection<File> files = FileUtils.listFiles(base, null, listRecursiveFlag.equals(ListRecursiveFlag.TRUE));
+        int lengthToSkip = BucketPathFileHelper.getAsFile(baseDir, absolutePath).getPath().length();
+        for(File file: files) {
+            String filenameWithExtension = file.getPath().substring(lengthToSkip);
+            result.add(new BucketPath(filenameWithExtension));
         }
-        DirectoryContent content = listContent(bucketDirectory, listRecursiveFlag);
-        addStorageMetaData(result, content);
         return result;
     }
 
@@ -174,28 +168,21 @@ class RealFileSystemExtendedStorageConnection implements ExtendedStoreConnection
     public void putBlob(BucketPath bucketPath, Payload payload) {
         LOGGER.debug("putBlob " + bucketPath);
         checkContainerExists(bucketPath);
-        zipFileHelper.writeZip(bucketPath, new SimplePayloadImpl(payload));
+        fileHelper.writePayload(bucketPath, new SimplePayloadImpl(payload));
     }
 
     @Override
     public Payload getBlob(BucketPath bucketPath) {
         LOGGER.debug("getBlob " + bucketPath);
         checkContainerExists(bucketPath);
-        return zipFileHelper.readZip(bucketPath, null);
-    }
-
-    @Override
-    public Payload getBlob(BucketPath bucketPath, StorageMetadata storageMetadata) {
-        LOGGER.debug("getBlob with Metadata " + bucketPath);
-        checkContainerExists(bucketPath);
-        return zipFileHelper.readZip(bucketPath, storageMetadata);
+        return fileHelper.readPayload(bucketPath);
     }
 
     @Override
     public void putBlobStream(BucketPath bucketPath, PayloadStream payloadStream) {
         LOGGER.debug("putBlobStream " + bucketPath);
         checkContainerExists(bucketPath);
-        zipFileHelper.writeZipStream(bucketPath, new SimplePayloadStreamImpl(payloadStream));
+        fileHelper.writePayloadStream(bucketPath, new SimplePayloadStreamImpl(payloadStream));
 
     }
 
@@ -203,28 +190,14 @@ class RealFileSystemExtendedStorageConnection implements ExtendedStoreConnection
     public PayloadStream getBlobStream(BucketPath bucketPath) {
         LOGGER.debug("getBlobStrea " + bucketPath);
         checkContainerExists(bucketPath);
-        return zipFileHelper.readZipStream(bucketPath, null);
-    }
-
-    @Override
-    public PayloadStream getBlobStream(BucketPath bucketPath, StorageMetadata storageMetadata) {
-        LOGGER.debug("getBlobStream " + bucketPath);
-        checkContainerExists(bucketPath);
-        return zipFileHelper.readZipStream(bucketPath, storageMetadata);
-    }
-
-    @Override
-    public StorageMetadata getStorageMetadata(BucketPath bucketPath) {
-        LOGGER.debug("getStorageMetadata " + bucketPath);
-        checkContainerExists(bucketPath);
-        return zipFileHelper.readZipMetadataOnly(bucketPath);
+        return fileHelper.readPayloadStream(bucketPath);
     }
 
     @Override
     public void removeBlob(BucketPath bucketPath) {
         LOGGER.debug("removeBlob " + bucketPath);
         checkContainerExists(bucketPath);
-        File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath).add(ZipFileHelper.ZIP_SUFFIX), absolutePath);
+        File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath), absolutePath);
         if (!file.exists()) {
             return;
         }
@@ -270,14 +243,6 @@ class RealFileSystemExtendedStorageConnection implements ExtendedStoreConnection
         }
     }
 
-    private int countBlobs(DirectoryContent content, int currentCounter) {
-        currentCounter += content.getFiles().size();
-        for (DirectoryContent subdir : content.getSubidrs()) {
-            currentCounter += countBlobs(subdir, 0);
-        }
-        return currentCounter;
-    }
-
     private final static class DirectoryFilenameFilter implements FilenameFilter {
         @Override
         public boolean accept(File dir, String name) {
@@ -288,101 +253,5 @@ class RealFileSystemExtendedStorageConnection implements ExtendedStoreConnection
             }
         }
     }
-
-
-    private void files2content(DirectoryContent content, BucketDirectory bucketDirectory, Collection<File> files) {
-        String knownPrefix = BucketPathFileHelper.getAsFile(baseDir.append(bucketDirectory), absolutePath).getAbsolutePath();
-
-        for (File f : files) {
-            String name = f.getName();
-            if (!name.endsWith(ZipFileHelper.ZIP_SUFFIX)) {
-                LOGGER.debug("ignore file " + bucketDirectory.appendName(name));
-            } else {
-                String origName = name.substring(0, name.length() - ZipFileHelper.ZIP_SUFFIX.length());
-                content.getFiles().add(bucketDirectory.appendName(origName));
-            }
-        }
-    }
-
-
-    private void dirs2content(DirectoryContent content, BucketDirectory bucketDirectory, String[] dirs) {
-        String knownPrefix = BucketPathFileHelper.getAsFile(baseDir.append(bucketDirectory), absolutePath).getAbsolutePath();
-
-        for (String dir : dirs) {
-            content.getSubidrs().add(new DirectoryContent(bucketDirectory.appendDirectory(dir)));
-        }
-    }
-
-    private void addFilesOnly(List<BucketPath> result, DirectoryContent content) {
-        result.addAll(content.getFiles());
-        for (DirectoryContent subContent : content.getSubidrs()) {
-            addFilesOnly(result, subContent);
-        }
-    }
-
-    private void listRecursive(DirectoryContent content) {
-        DirectoryContent current = listContent(content.getDirectory(), ListRecursiveFlag.FALSE);
-
-        List<DirectoryContent> newSubdirs = new ArrayList<>();
-        for (DirectoryContent subdir : content.getSubidrs()) {
-            DirectoryContent newSubdir = listContent(subdir.getDirectory(), ListRecursiveFlag.FALSE);
-            listRecursive(newSubdir);
-            newSubdirs.add(newSubdir);
-        }
-        content.getSubidrs().clear();
-        content.getSubidrs().addAll(newSubdirs);
-    }
-
-    private DirectoryContent listContent(BucketDirectory bucketDirectory, ListRecursiveFlag listRecursiveFlag) {
-        File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketDirectory), absolutePath);
-        try {
-            DirectoryContent content = new DirectoryContent(bucketDirectory);
-            if (file.isFile()) {
-                return content;
-            }
-            if (!file.isDirectory()) {
-                return content;
-            }
-            if (listRecursiveFlag.equals(ListRecursiveFlag.FALSE)) {
-                Collection<File> files = FileUtils.listFiles(file, null, listRecursiveFlag.equals(ListRecursiveFlag.TRUE));
-                files2content(content, bucketDirectory, files);
-                String[] list = file.list(new DirectoryFilenameFilter());
-                dirs2content(content, bucketDirectory, list);
-                return content;
-            }
-            content = listContent(bucketDirectory, ListRecursiveFlag.FALSE);
-            listRecursive(content);
-            return content;
-        } catch (Exception e) {
-            throw new StorageConnectionException("" + file, e);
-        }
-    }
-
-    private List<BucketPath> listFlat(BucketDirectory bucketDirectory, ListRecursiveFlag listRecursiveFlag) {
-        List<BucketPath> result = new ArrayList<>();
-        DirectoryContent content = listContent(bucketDirectory, listRecursiveFlag);
-        addFilesOnly(result, content);
-        return result;
-    }
-
-    private void addStorageMetaData(List<StorageMetadata> result, DirectoryContent content) {
-        result.add(createStorageMetadataForDirectory(content));
-        for (BucketPath file : content.getFiles()) {
-            result.add(getStorageMetadata(file));
-        }
-        for (DirectoryContent dir : content.getSubidrs()) {
-            addStorageMetaData(result, dir);
-        }
-    }
-
-    private StorageMetadata createStorageMetadataForDirectory(DirectoryContent content) {
-        SimpleStorageMetadataImpl storageMetadata = new SimpleStorageMetadataImpl();
-        storageMetadata.setType(StorageType.FOLDER);
-        storageMetadata.setSize(new Long(content.getFiles().size() + content.getSubidrs().size()));
-
-        storageMetadata.setName(BucketPathUtil.getAsString(content.getDirectory()));
-        return storageMetadata;
-    }
-
 
 }

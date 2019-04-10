@@ -3,7 +3,6 @@ package de.adorsys.dfs.connection.impl.factory;
 import de.adorsys.dfs.connection.api.types.properties.AmazonS3ConnectionProperties;
 import de.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
 import de.adorsys.dfs.connection.api.types.properties.FilesystemConnectionProperties;
-import de.adorsys.dfs.connection.api.types.properties.MongoConnectionProperties;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,24 +43,6 @@ public class ReadArgumentsTest {
     }
 
     @Test
-    public void testEnvMongo1() {
-        System.setProperty(ReadArguments.MONGO, "localhost:27017/mongdb");
-        ConnectionProperties properties = new ReadArguments().readEnvironment();
-        Assert.assertTrue(properties instanceof MongoConnectionProperties);
-        Assert.assertTrue(properties.getBucketPathEncryptionPassword() != null);
-        MongoConnectionProperties m = (MongoConnectionProperties) properties;
-        Assert.assertTrue(m.getMongoURI() != null);
-    }
-
-    @Test
-    public void testEnvMongo2() {
-        System.setProperty(ReadArguments.MONGO, "");
-        ConnectionProperties properties = new ReadArguments().readEnvironment();
-        Assert.assertTrue(properties instanceof MongoConnectionProperties);
-        Assert.assertTrue(properties.getBucketPathEncryptionPassword() != null);
-    }
-
-    @Test
     public void testEnvFilesystem1() {
         System.setProperty(ReadArguments.FILESYSTEM, "target/filesystem");
         ConnectionProperties properties = new ReadArguments().readEnvironment();
@@ -75,24 +56,6 @@ public class ReadArgumentsTest {
         ConnectionProperties properties = new ReadArguments().readEnvironment();
         Assert.assertTrue(properties instanceof  FilesystemConnectionProperties);
         Assert.assertTrue(properties.getBucketPathEncryptionPassword() != null);
-    }
-
-    @Test
-    public void testArgMongo1() {
-        String[] args = new String[1];
-        args[0] = ReadArguments.MONGO_ARG + "localhost,123,mongdb";
-        ReadArguments.ArgsAndProperties argsAndProperties = new ReadArguments().readArguments(args);
-        Assert.assertEquals(0, argsAndProperties.remainingArgs.length);
-        Assert.assertTrue(argsAndProperties.properties.getBucketPathEncryptionPassword() != null);
-    }
-
-    @Test
-    public void testArgMongo2() {
-        String[] args = new String[1];
-        args[0] = ReadArguments.MONGO_ARG;
-        ReadArguments.ArgsAndProperties argsAndProperties = new ReadArguments().readArguments(args);
-        Assert.assertEquals(0, argsAndProperties.remainingArgs.length);
-        Assert.assertTrue(argsAndProperties.properties.getBucketPathEncryptionPassword() != null);
     }
 
     @Test
