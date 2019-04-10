@@ -12,7 +12,6 @@ import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
 import de.adorsys.dfs.connection.impl.amazons3.AmazonS3DFSConnection;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
@@ -24,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +34,7 @@ import java.util.List;
 public class DFSConnectionTest {
     private final static Logger LOGGER = LoggerFactory.getLogger(DFSConnectionTest.class);
     private List<BucketDirectory> containers = new ArrayList<>();
-    private DFSConnection s = ExtendedStoreConnectionFactory.get();
+    private DFSConnection s = DFSConnectionFactory.get();
 
     @Before
     public void before() {
@@ -57,7 +55,7 @@ public class DFSConnectionTest {
 
     @Test
     public void cleanDB() {
-        DFSConnection c = ExtendedStoreConnectionFactory.get();
+        DFSConnection c = DFSConnectionFactory.get();
         c.listAllBuckets().forEach(el -> c.deleteContainer(el));
     }
 

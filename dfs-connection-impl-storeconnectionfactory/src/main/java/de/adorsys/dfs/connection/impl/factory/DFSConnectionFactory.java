@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by peter on 15.03.18 at 11:38.
  */
-public class ExtendedStoreConnectionFactory {
-    private final static Logger LOGGER = LoggerFactory.getLogger(ExtendedStoreConnectionFactory.class);
+public class DFSConnectionFactory {
+    private final static Logger LOGGER = LoggerFactory.getLogger(DFSConnectionFactory.class);
     private static ConnectionProperties properties = null;
 
     public static DFSConnection get(ConnectionProperties properties) {
