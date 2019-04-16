@@ -26,6 +26,13 @@ public class BucketDirectory {
     }
 
     public BucketDirectory appendDirectory(String directory) {
+        if (directory != null) {
+            if (directory.length() == 1) {
+                if (directory.equals(BucketPath.BUCKET_SEPARATOR)) {
+                    return this;
+                }
+            }
+        }
         return append(new BucketDirectory(directory));
     }
 
