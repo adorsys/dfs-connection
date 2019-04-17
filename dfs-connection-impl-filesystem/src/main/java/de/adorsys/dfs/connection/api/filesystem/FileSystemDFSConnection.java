@@ -55,7 +55,7 @@ public class FileSystemDFSConnection implements DFSConnection {
             } else {
                 frame.add("absolutedir : " + basedir);
             }
-            LOGGER.info(frame.toString());
+            LOGGER.debug(frame.toString());
 
             this.fileHelper = new FileHelper(this.baseDir, absolutePath);
         } catch (Exception e) {

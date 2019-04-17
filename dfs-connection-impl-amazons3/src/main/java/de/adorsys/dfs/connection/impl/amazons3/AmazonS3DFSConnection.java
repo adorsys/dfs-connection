@@ -80,7 +80,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
         frame.add("secretKey:   " + secretKey);
         frame.add("region:      " + amazonS3Region);
         frame.add("root bucket: " + amazonS3RootBucket);
-        LOGGER.info(frame.toString());
+        LOGGER.debug(frame.toString());
 
         AWSCredentialsProvider credentialsProvider = new AWSCredentialsProvider() {
             @Override
@@ -467,16 +467,16 @@ public class AmazonS3DFSConnection implements DFSConnection {
     }
 
     private void showResult(List<BucketPath> result) {
-        LOGGER.info("nachher:");
+        LOGGER.debug("nachher:");
         result.forEach(el -> {
-            LOGGER.info(el.toString());
+            LOGGER.debug(el.toString());
         });
     }
 
     private void showKeys(List<String> keys) {
-        LOGGER.info("vorher");
+        LOGGER.debug("vorher");
         keys.forEach(el -> {
-            LOGGER.info(el);
+            LOGGER.debug(el);
         });
     }
 

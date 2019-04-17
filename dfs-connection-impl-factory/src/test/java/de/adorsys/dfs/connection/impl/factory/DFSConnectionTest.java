@@ -71,9 +71,9 @@ public class DFSConnectionTest {
         Assert.assertFalse(s.containerExists(bd));
         s.createContainer(bd);
         try {
-            LOGGER.info("you have 10 secs to kill the connection");
+            LOGGER.debug("you have 10 secs to kill the connection");
             Thread.currentThread().sleep(10000);
-            LOGGER.info("continue");
+            LOGGER.debug("continue");
         } catch (Exception e) {
             throw BaseExceptionHandler.handle(e);
         }
@@ -88,9 +88,9 @@ public class DFSConnectionTest {
         s.putBlob(file, new SimplePayloadImpl(filecontent));
 
         try {
-            LOGGER.info("you have 10 secs to kill the connection");
+            LOGGER.debug("you have 10 secs to kill the connection");
             Thread.currentThread().sleep(10000);
-            LOGGER.info("continue");
+            LOGGER.debug("continue");
         } catch (Exception e) {
             throw BaseExceptionHandler.handle(e);
         }
@@ -197,7 +197,7 @@ public class DFSConnectionTest {
         int i = 0;
 
         while (i > 0) {
-            LOGGER.info("wait for visualVM profiler " + i);
+            LOGGER.debug("wait for visualVM profiler " + i);
             try {
                 Thread.currentThread().sleep(1000);
             } catch (Exception e) {
@@ -534,7 +534,7 @@ public class DFSConnectionTest {
             s.createContainer(bucketPath.getBucketDirectory());
             try (ByteArrayInputStream bis = new ByteArrayInputStream(content)) {
                 s.putBlobStream(bucketPath, new SimplePayloadStreamImpl(bis));
-                LOGGER.info("successfully stored stream content: " + HexUtil.convertBytesToHexString(content));
+                LOGGER.debug("successfully stored stream content: " + HexUtil.convertBytesToHexString(content));
             }
             PayloadStream blobStream = s.getBlobStream(bucketPath);
             byte[] readContent = null;
