@@ -53,7 +53,7 @@
         <module>dfs-connection-api</module>
         <module>dfs-connection-impl-amazons3</module>
         <module>dfs-connection-impl-filesystem</module>
-        <module>dfs-connection-impl-storeconnectionfactory</module>
+        <module>dfs-connection-impl-factory</module>
     </modules>
 
     <dependencyManagement>

@@ -80,13 +80,13 @@ public class DirectAmazonS3Test {
                     .build();
             List<Bucket> buckets = conn.listBuckets();
             buckets.forEach(bucket -> {
-                LOGGER.info("found bucket:" + bucket);
+                LOGGER.debug("found bucket:" + bucket);
                 ObjectListing objectListing = conn.listObjects(new ListObjectsRequest().withBucketName(bucket.getName()));
                 objectListing.getObjectSummaries().forEach(sum -> {
-                    LOGGER.info("found " + sum.getKey() + " in " + sum.getBucketName());
+                    LOGGER.debug("found " + sum.getKey() + " in " + sum.getBucketName());
                     VersionListing versionListing = conn.listVersions(sum.getBucketName(), sum.getKey());
                     versionListing.getVersionSummaries().forEach(vsum -> {
-                        LOGGER.info("key:" + vsum.getKey() + " version:" + vsum.getVersionId());
+                        LOGGER.debug("key:" + vsum.getKey() + " version:" + vsum.getVersionId());
                     });
                 });
             });
@@ -94,20 +94,20 @@ public class DirectAmazonS3Test {
             // Erzeuge Datei affe.txt im bucket affe
             Bucket bucket = null;
             if (!conn.doesBucketExistV2(AFFE)) {
-                LOGGER.info("bucket " + AFFE + " does not exist yet. create it");
+                LOGGER.debug("bucket " + AFFE + " does not exist yet. create it");
                 bucket = conn.createBucket(AFFE);
             } else {
-                LOGGER.info("bucket " + AFFE + " wird wiederverwendet");
+                LOGGER.debug("bucket " + AFFE + " wird wiederverwendet");
                 bucket = conn.listBuckets().stream().filter(b -> b.getName().equals(AFFE)).findFirst().get();
             }
 
             String key = "firstFile.txt";
-            LOGGER.info("start create file " + key + " in bucket " + AFFE);
+            LOGGER.debug("start create file " + key + " in bucket " + AFFE);
             String content = "affe";
             InputStream is = new ByteArrayInputStream(content.getBytes());
 
             {
-                LOGGER.info("safe directly");
+                LOGGER.debug("safe directly");
                 ObjectMetadata objectMetadata = new ObjectMetadata();
 //                 objectMetadata.setContentLength(content.getBytes().length);
                 Map<String, String> userMetadata = new HashMap<>();
@@ -116,16 +116,16 @@ public class DirectAmazonS3Test {
 
                 String s = metadataString;
                 s = HexUtil.convertBytesToHexString(metadataString.getBytes());
-                LOGGER.info("SETZE METADATA AUF " + s);
+                LOGGER.debug("SETZE METADATA AUF " + s);
                 userMetadata.put("mykey3", s);
 
                 objectMetadata.setUserMetadata(userMetadata);
                 PutObjectRequest putObjectRequest = new PutObjectRequest(AFFE, key, is, objectMetadata);
                 PutObjectResult putObjectResult = conn.putObject(putObjectRequest);
-                LOGGER.info("creation of object :" + putObjectResult.toString());
+                LOGGER.debug("creation of object :" + putObjectResult.toString());
             }
             {
-                LOGGER.info("read written file");
+                LOGGER.debug("read written file");
                 GetObjectRequest getObjectRequest = new GetObjectRequest(AFFE, key);
                 S3Object object = conn.getObject(getObjectRequest);
                 S3ObjectInputStream objectContent = object.getObjectContent();
@@ -133,17 +133,17 @@ public class DirectAmazonS3Test {
                 if (!readContent.equals(content)) {
                     throw new BaseException("geschrieben wurde:" + content + " aber gelesen wurde " + readContent);
                 }
-                LOGGER.info("Inhalt wurde korrekt ausgelesen");
+                LOGGER.debug("Inhalt wurde korrekt ausgelesen");
                 ObjectMetadata objectMetadata = object.getObjectMetadata();
-                LOGGER.info("version id:" + objectMetadata.getVersionId());
+                LOGGER.debug("version id:" + objectMetadata.getVersionId());
                 objectMetadata.getUserMetadata().keySet().forEach(mkey -> {
-                    LOGGER.info("key " + mkey + " value:" + objectMetadata.getUserMetadata().get(mkey));
+                    LOGGER.debug("key " + mkey + " value:" + objectMetadata.getUserMetadata().get(mkey));
                 });
             }
             {
-                LOGGER.info("vor delete exists:" + exists(conn, AFFE, key));
+                LOGGER.debug("vor delete exists:" + exists(conn, AFFE, key));
                 conn.deleteObject(AFFE, key);
-                LOGGER.info("nach delete exists:" + exists(conn, AFFE, key));
+                LOGGER.debug("nach delete exists:" + exists(conn, AFFE, key));
             }
             {
                 createFile(conn, AFFE, "FILE1.TXT");
@@ -161,7 +161,7 @@ public class DirectAmazonS3Test {
                 createFile(conn, AFFE, "dir2/dir22/FILE1.TXT");
                 createFile(conn, AFFE, "dir2/dir22/FILE2.TXT");
             }
-            LOGGER.info("-----------------------------------------------");
+            LOGGER.debug("-----------------------------------------------");
             showRecursive(conn, AFFE, "/");
             showRecursive(conn, AFFE, "/dir1");
             showRecursive(conn, AFFE, "/dir2/dir22");
@@ -180,18 +180,18 @@ public class DirectAmazonS3Test {
         ObjectListing ol = conn.listObjects(container, prefix);
         final List<String> keys = new ArrayList<>();
         ol.getObjectSummaries().forEach(el -> keys.add(DELIMITER + el.getKey()));
-        keys.forEach(key -> LOGGER.info("BEFORE found for " + fullprefix + " :" + key));
-        LOGGER.info("--");
-        LOGGER.info("in total:" + keys.size());
+        keys.forEach(key -> LOGGER.debug("BEFORE found for " + fullprefix + " :" + key));
+        LOGGER.debug("--");
+        LOGGER.debug("in total:" + keys.size());
         {
             List<String> fiteredkeys = filter(fullprefix, keys, false);
-            fiteredkeys.forEach(key -> LOGGER.info("AFTER non recursive found for " + fullprefix + " :" + key));
-            LOGGER.info("in total:" + fiteredkeys.size());
+            fiteredkeys.forEach(key -> LOGGER.debug("AFTER non recursive found for " + fullprefix + " :" + key));
+            LOGGER.debug("in total:" + fiteredkeys.size());
         }
         {
             List<String> fiteredkeys = filter(fullprefix, keys, true);
-            fiteredkeys.forEach(key -> LOGGER.info("AFTER     recursive found for " + fullprefix + " :" + key));
-            LOGGER.info("in total:" + fiteredkeys.size());
+            fiteredkeys.forEach(key -> LOGGER.debug("AFTER     recursive found for " + fullprefix + " :" + key));
+            LOGGER.debug("in total:" + fiteredkeys.size());
         }
 
     }
@@ -284,14 +284,14 @@ public class DirectAmazonS3Test {
     }
 
     void createFile(AmazonS3 conn, String bucket, String name) {
-        LOGGER.info("safe directly file " + bucket + " " + name);
+        LOGGER.debug("safe directly file " + bucket + " " + name);
         String content = "content of " + bucket + " " + name;
         InputStream is = new ByteArrayInputStream(content.getBytes());
         ObjectMetadata objectMetadata = new ObjectMetadata();
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, name, is, objectMetadata);
         objectMetadata.setContentLength(content.getBytes().length);
         PutObjectResult putObjectResult = conn.putObject(putObjectRequest);
-        LOGGER.info("creation of object :" + putObjectResult.toString());
+        LOGGER.debug("creation of object :" + putObjectResult.toString());
     }
 
 
