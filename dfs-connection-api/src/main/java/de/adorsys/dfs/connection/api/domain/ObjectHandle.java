@@ -1,8 +1,12 @@
 package de.adorsys.dfs.connection.api.domain;
 
+import de.adorsys.dfs.connection.api.complextypes.BucketPath;
+import de.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import de.adorsys.dfs.connection.api.exceptions.BucketRestrictionException;
+
+import java.io.File;
 
 @ApiModel(value = "ObjectHandle", description = "Contains information necessary to storage or retrieval an object from the object storage.")
 public class ObjectHandle {
@@ -62,7 +66,10 @@ public class ObjectHandle {
             throw new BucketRestrictionException("Bucket must not be null");
         }
         if (container.length() < 3) {
-            throw new BucketRestrictionException("Bucket length must be at least 3 chars: " + container);
+            if (File.separator.equals(BucketPath.BUCKET_SEPARATOR)) {
+                throw new BucketRestrictionException("Bucket length must be at least 3 chars: " + container);
+            }
+            // on windows this rule is ignored
         }
         if (!container.toLowerCase().equals(container)) {
             throw new BucketRestrictionException("Bucket must not contain uppercase letters: " + container);

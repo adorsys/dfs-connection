@@ -2,6 +2,7 @@ package de.adorsys.dfs.connection.api.service.impl;
 
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -24,4 +25,8 @@ public class SimplePayloadStreamImpl implements PayloadStream {
     }
 
 
+    @Override
+    public void close() throws IOException {
+        inputStream.close();
+    }
 }
