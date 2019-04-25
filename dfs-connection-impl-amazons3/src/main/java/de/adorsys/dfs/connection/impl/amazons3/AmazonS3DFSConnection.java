@@ -57,7 +57,6 @@ public class AmazonS3DFSConnection implements DFSConnection {
     private static final String STORAGE_METADATA_KEY = "StorageMetadata";
     private final static int AMAZON_S3_META_LIMIT = 1024 * 2;
     private BucketDirectory amazonS3RootBucket;
-    private BucketDirectory amazonS3RootContainersBucket;
     private AmazonS3Region amazonS3Region;
 
     public AmazonS3DFSConnection(AmazonS3ConnectionProperties properties) {
@@ -71,7 +70,6 @@ public class AmazonS3DFSConnection implements DFSConnection {
                                  AmazonS3RootBucketName anAmazonS3RootBucketName) {
         amazonS3Region = anAmazonS3Region;
         amazonS3RootBucket = new BucketDirectory(anAmazonS3RootBucketName.getValue());
-        amazonS3RootContainersBucket = new BucketDirectory(amazonS3RootBucket.getObjectHandle().getContainer() + ".containers");
         Frame frame = new Frame();
         frame.add("USE AMAZON S3 COMPLIANT SYSTEM");
         frame.add("(has be up and running)");
@@ -102,7 +100,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
         clientConfig.disableSocketProxy();
         connection = AmazonS3ClientBuilder.standard()
                 .withCredentials(credentialsProvider)
-                .withEndpointConfiguration(endpoint)
+                .withRegion(amazonS3Region.getValue())
                 .withClientConfiguration(clientConfig)
                 .withPayloadSigningEnabled(false)
                 .enablePathStyleAccess()
@@ -110,9 +108,6 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
         if (!connection.doesBucketExistV2(amazonS3RootBucket.getObjectHandle().getContainer())) {
             connection.createBucket(amazonS3RootBucket.getObjectHandle().getContainer());
-        }
-        if (!connection.doesBucketExistV2(amazonS3RootContainersBucket.getObjectHandle().getContainer())) {
-            connection.createBucket(amazonS3RootContainersBucket.getObjectHandle().getContainer());
         }
     }
 
@@ -194,7 +189,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
     @Override
     public boolean containerExists(BucketDirectory bucketDirectory) {
-        BucketPath bucketPath = amazonS3RootContainersBucket.appendName(bucketDirectory.getObjectHandle().getContainer());
+        BucketPath bucketPath = amazonS3RootBucket.appendName(bucketDirectory.getObjectHandle().getContainer());
         try {
             // Nicht schön hier mit Exceptions zu arbeiten, aber schneller als mit list
             connection.getObjectMetadata(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName());
@@ -216,7 +211,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
         LOGGER.debug("createContainer " + bucketDirectory);
 
         if (!containerExists(bucketDirectory)) {
-            BucketPath bucketPath = amazonS3RootContainersBucket.appendName(bucketDirectory.getObjectHandle().getContainer());
+            BucketPath bucketPath = amazonS3RootBucket.appendName(bucketDirectory.getObjectHandle().getContainer());
 
             byte[] content = "x".getBytes();
             LOGGER.debug("write " + bucketPath);
@@ -277,7 +272,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
     public List<BucketDirectory> listAllBuckets() {
         LOGGER.debug("listAllBuckets");
         List<BucketDirectory> buckets = new ArrayList<>();
-        ObjectListing ol = connection.listObjects(amazonS3RootContainersBucket.getObjectHandle().getContainer());
+        ObjectListing ol = connection.listObjects(amazonS3RootBucket.getObjectHandle().getContainer());
         ol.getObjectSummaries().forEach(bucket -> buckets.add(new BucketDirectory(bucket.getKey())));
         return buckets;
     }
@@ -461,7 +456,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
             LOGGER.debug("SERVER CONFIRMED DELETION OF " + deleteObjectsResult.getDeletedObjects().size() + " elements");
         }
         if (abucketDirectory.getObjectHandle().getName() == null) {
-            BucketPath containerFile = amazonS3RootContainersBucket.appendName(abucketDirectory.getObjectHandle().getContainer());
+            BucketPath containerFile = amazonS3RootBucket.appendName(abucketDirectory.getObjectHandle().getContainer());
             connection.deleteObject(containerFile.getObjectHandle().getContainer(), containerFile.getObjectHandle().getName());
         }
     }
