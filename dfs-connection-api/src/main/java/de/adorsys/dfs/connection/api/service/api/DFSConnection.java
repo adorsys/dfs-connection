@@ -6,10 +6,12 @@ import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
 import de.adorsys.dfs.connection.api.types.ExtendedStoreConnectionType;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
+import de.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
 
 import java.util.List;
 
 public interface DFSConnection {
+    ConnectionProperties getConnectionProperties();
 
     void putBlob(BucketPath bucketPath, Payload payload);
     Payload getBlob(BucketPath bucketPath);

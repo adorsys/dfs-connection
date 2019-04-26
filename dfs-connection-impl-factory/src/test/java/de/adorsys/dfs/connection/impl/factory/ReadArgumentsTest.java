@@ -23,23 +23,16 @@ public class ReadArgumentsTest {
     @Before
     public void before() {
         minio = System.getProperty(ReadArguments.AMAZONS3);
-        mongo = System.getProperty(ReadArguments.MONGO);
         filesys = System.getProperty(ReadArguments.FILESYSTEM);
         System.clearProperty(ReadArguments.AMAZONS3);
-        System.clearProperty(ReadArguments.MONGO);
         System.clearProperty(ReadArguments.FILESYSTEM);
-        System.clearProperty(ReadArguments.NO_ENCRYPTION_PASSWORD);
-        System.clearProperty(ReadArguments.ENCRYPTION_PASSWORD);
     }
 
     @After
     public void after() {
         LOGGER.debug("----------------");
         System.clearProperty(ReadArguments.AMAZONS3);
-        System.clearProperty(ReadArguments.MONGO);
         System.clearProperty(ReadArguments.FILESYSTEM);
-        System.clearProperty(ReadArguments.NO_ENCRYPTION_PASSWORD);
-        System.clearProperty(ReadArguments.ENCRYPTION_PASSWORD);
     }
 
     @Test
@@ -47,7 +40,6 @@ public class ReadArgumentsTest {
         System.setProperty(ReadArguments.FILESYSTEM, "target/filesystem");
         ConnectionProperties properties = new ReadArguments().readEnvironment();
         Assert.assertTrue(properties instanceof FilesystemConnectionProperties);
-        Assert.assertTrue(properties.getBucketPathEncryptionPassword() != null);
     }
 
     @Test
@@ -55,7 +47,6 @@ public class ReadArgumentsTest {
         System.setProperty(ReadArguments.FILESYSTEM, "");
         ConnectionProperties properties = new ReadArguments().readEnvironment();
         Assert.assertTrue(properties instanceof  FilesystemConnectionProperties);
-        Assert.assertTrue(properties.getBucketPathEncryptionPassword() != null);
     }
 
     @Test
@@ -64,7 +55,6 @@ public class ReadArgumentsTest {
         args[0] = ReadArguments.FILESYSTEM_ARG + "target/filesystem";
         ReadArguments.ArgsAndProperties argsAndProperties = new ReadArguments().readArguments(args);
         Assert.assertEquals(0, argsAndProperties.remainingArgs.length);
-        Assert.assertTrue(argsAndProperties.properties.getBucketPathEncryptionPassword() != null);
     }
 
     @Test
@@ -73,29 +63,24 @@ public class ReadArgumentsTest {
         args[0] = ReadArguments.FILESYSTEM_ARG;
         ReadArguments.ArgsAndProperties argsAndProperties = new ReadArguments().readArguments(args);
         Assert.assertEquals(0, argsAndProperties.remainingArgs.length);
-        Assert.assertTrue(argsAndProperties.properties.getBucketPathEncryptionPassword() != null);
     }
 
     @Test
     public void testParam3Args() {
-        String[] args = new String[3];
+        String[] args = new String[2];
         args[0] = ReadArguments.AMAZONS3_ARG + "http:1,key,key";
-        args[1] = ReadArguments.NO_ENCRYPTION_PASSWORD_ARG;
-        args[2] = "anyParam";
+        args[1] = "anyParam";
         ReadArguments.ArgsAndProperties argsAndProperties = new ReadArguments().readArguments(args);
         Assert.assertEquals(1, argsAndProperties.remainingArgs.length);
-        Assert.assertTrue(argsAndProperties.properties.getBucketPathEncryptionPassword() == null);
     }
 
 
     @Test
     public void testEnv3Args() {
         System.setProperty(ReadArguments.AMAZONS3,"http:1,key,key");
-        System.setProperty(ReadArguments.NO_ENCRYPTION_PASSWORD,"any");
         System.setProperty("any","any");
         ConnectionProperties properties = new ReadArguments().readEnvironment();
         Assert.assertTrue(properties instanceof AmazonS3ConnectionProperties);
-        Assert.assertTrue(properties.getBucketPathEncryptionPassword() == null);
     }
 
 }
