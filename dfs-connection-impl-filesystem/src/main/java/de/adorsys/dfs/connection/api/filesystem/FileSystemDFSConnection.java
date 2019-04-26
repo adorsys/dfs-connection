@@ -15,6 +15,7 @@ import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
 import de.adorsys.dfs.connection.api.types.ExtendedStoreConnectionType;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
 import de.adorsys.dfs.connection.api.types.connection.FilesystemRootBucketName;
+import de.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
 import de.adorsys.dfs.connection.api.types.properties.FilesystemConnectionProperties;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ import java.util.List;
  * Created by peter on 06.02.18 at 12:40.
  */
 public class FileSystemDFSConnection implements DFSConnection {
+    private FilesystemConnectionPropertiesImpl connectionProperties;
     private final static Logger LOGGER = LoggerFactory.getLogger(FileSystemDFSConnection.class);
     protected final BucketDirectory baseDir;
     private FileHelper fileHelper;
@@ -42,6 +44,9 @@ public class FileSystemDFSConnection implements DFSConnection {
     }
     public FileSystemDFSConnection(FilesystemRootBucketName basedir) {
         try {
+            connectionProperties = new FilesystemConnectionPropertiesImpl();
+            connectionProperties.setFilesystemRootBucketName(basedir);
+
             this.baseDir = new BucketDirectory(basedir.getValue());
             this.absolutePath = (basedir.getValue().startsWith(BucketPath.BUCKET_SEPARATOR));
             Frame frame = new Frame();
@@ -162,6 +167,11 @@ public class FileSystemDFSConnection implements DFSConnection {
     @Override
     public ExtendedStoreConnectionType getType() {
         return ExtendedStoreConnectionType.FILESYSTEM;
+    }
+
+    @Override
+    public ConnectionProperties getConnectionProperties() {
+        return connectionProperties;
     }
 
     @Override

@@ -28,6 +28,7 @@ import de.adorsys.dfs.connection.api.types.connection.AmazonS3Region;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3RootBucketName;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3SecretKey;
 import de.adorsys.dfs.connection.api.types.properties.AmazonS3ConnectionProperties;
+import de.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -49,6 +50,7 @@ import java.util.Set;
  * Created by peter on 17.09.18.
  */
 public class AmazonS3DFSConnection implements DFSConnection {
+    private AmazonS3ConnectionProperitesImpl connectionProperties;
     private final static Logger LOGGER = LoggerFactory.getLogger(AmazonS3DFSConnection.class);
     private static final Logger SPECIAL_LOGGER = LoggerFactory.getLogger("SPECIAL_LOGGER");
     private AmazonS3 connection = null;
@@ -69,17 +71,25 @@ public class AmazonS3DFSConnection implements DFSConnection {
                                  AmazonS3SecretKey secretKey,
                                  AmazonS3Region anAmazonS3Region,
                                  AmazonS3RootBucketName anAmazonS3RootBucketName) {
+        connectionProperties = new AmazonS3ConnectionProperitesImpl();
+        connectionProperties.setUrl(url);
+        connectionProperties.setAmazonS3AccessKey(accessKey);
+        connectionProperties.setAmazonS3SecretKey(secretKey);
+        connectionProperties.setAmazonS3Region(anAmazonS3Region);
+        connectionProperties.setAmazonS3RootBucketName(anAmazonS3RootBucketName);
+
         amazonS3Region = anAmazonS3Region;
         amazonS3RootBucket = new BucketDirectory(anAmazonS3RootBucketName.getValue());
-        amazonS3RootContainersBucket = new BucketDirectory(amazonS3RootBucket.getObjectHandle().getContainer() + ".containers");
+        amazonS3RootContainersBucket = new BucketDirectory(amazonS3RootBucket.getObjectHandle().getContainer() + ".cs");
         Frame frame = new Frame();
         frame.add("USE AMAZON S3 COMPLIANT SYSTEM");
         frame.add("(has be up and running)");
-        frame.add("url: " + url.toString());
-        frame.add("accessKey:   " + accessKey);
-        frame.add("secretKey:   " + secretKey);
-        frame.add("region:      " + amazonS3Region);
-        frame.add("root bucket: " + amazonS3RootBucket);
+        frame.add("url:              " + url.toString());
+        frame.add("accessKey:        " + accessKey);
+        frame.add("secretKey:        " + secretKey);
+        frame.add("region:           " + amazonS3Region);
+        frame.add("root bucket:      " + amazonS3RootBucket);
+        frame.add("container bucket: " + amazonS3RootContainersBucket);
         LOGGER.debug(frame.toString());
 
         AWSCredentialsProvider credentialsProvider = new AWSCredentialsProvider() {
@@ -114,6 +124,11 @@ public class AmazonS3DFSConnection implements DFSConnection {
         if (!connection.doesBucketExistV2(amazonS3RootContainersBucket.getObjectHandle().getContainer())) {
             connection.createBucket(amazonS3RootContainersBucket.getObjectHandle().getContainer());
         }
+    }
+
+    @Override
+    public ConnectionProperties getConnectionProperties() {
+        return connectionProperties;
     }
 
     @Override
