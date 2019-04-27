@@ -14,7 +14,6 @@ import de.adorsys.common.exceptions.BaseExceptionHandler;
 import de.adorsys.common.utils.Frame;
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
-import de.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
 import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
 import de.adorsys.dfs.connection.api.service.api.DFSConnection;
@@ -195,18 +194,13 @@ public class AmazonS3DFSConnection implements DFSConnection {
     public List<BucketPath> list(BucketDirectory abucketDirectory, ListRecursiveFlag listRecursiveFlag) {
         LOGGER.debug("list " + abucketDirectory);
         List<BucketPath> returnList = new ArrayList<>();
-        /*
-        if (!containerExists(abucketDirectory)) {
-            LOGGER.debug("return empty list for " + abucketDirectory);
-            return returnList;
-        }
 
-         */
-
-        if (blobExists(new BucketPath(BucketPathUtil.getAsString(abucketDirectory)))) {
-            // diese If-Abfrage dient dem Spezialfall, dass jemand einen BucketPath als BucketDirectory uebergeben hat.
-            // Dann gibt es diesen bereits als file, dann muss eine leere Liste zurücgeben werden
-            return returnList;
+        if (!abucketDirectory.isRoot()) {
+            if (blobExists(new BucketPath(abucketDirectory.getValue()))) {
+                // diese If-Abfrage dient dem Spezialfall, dass jemand einen BucketPath als BucketDirectory uebergeben hat.
+                // Dann gibt es diesen bereits als file, dann muss eine leere Liste zurücgeben werden
+                return returnList;
+            }
         }
 
         BucketDirectory bucketDirectory = amazonS3RootBucket.append(abucketDirectory);
@@ -249,8 +243,8 @@ public class AmazonS3DFSConnection implements DFSConnection {
     // ==========================================================================
 
     List<BucketPath> filter(BucketDirectory rootBucketName, BucketDirectory searchDirectory, String prefix, final List<String> keys, ListRecursiveFlag recursive) {
-        String rootDirectoryString = BucketPathUtil.getAsString(rootBucketName);
-        String searchDirectoryString = BucketPathUtil.getAsString(searchDirectory);
+        String rootDirectoryString = rootBucketName.getValue();
+        String searchDirectoryString = searchDirectory.getValue();
         LOGGER.debug("recursive is " + recursive);
         LOGGER.debug("prefix    is " + prefix);
         LOGGER.debug("rootdir   is " + rootDirectoryString);

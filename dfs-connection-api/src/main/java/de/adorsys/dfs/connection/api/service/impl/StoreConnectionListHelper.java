@@ -2,7 +2,6 @@ package de.adorsys.dfs.connection.api.service.impl;
 
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
-import de.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
 
 import java.util.HashSet;
 import java.util.List;
@@ -14,10 +13,10 @@ import java.util.Set;
 public class StoreConnectionListHelper {
     public static Set<BucketDirectory> findAllSubDirs(BucketDirectory rootdir, List<BucketPath> bucketPaths) {
 
-        String prefix = BucketPathUtil.getAsString(rootdir);
+        String prefix = rootdir.getValue();
         Set<BucketDirectory> allDirs = new HashSet<>();
         bucketPaths.forEach(bucketPath -> {
-            String key = BucketPathUtil.getAsString(bucketPath);
+            String key = bucketPath.getValue();
             int fromIndex = prefix.length();
             while (fromIndex != -1) {
                 fromIndex = key.indexOf(BucketPath.BUCKET_SEPARATOR, fromIndex+1);
@@ -31,9 +30,6 @@ public class StoreConnectionListHelper {
             }
 
         });
-
-
-
 
         bucketPaths.forEach(bucketPath -> {
             allDirs.add(bucketPath.getBucketDirectory());

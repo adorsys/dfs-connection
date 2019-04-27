@@ -14,14 +14,6 @@ public class BucketPathUtil {
     private final static String WINDOWS_BUCKET_PATH_SEPARATOR = "\\\\";
     private final static Logger LOGGER = LoggerFactory.getLogger(BucketPathUtil.class);
 
-    public static String getAsString(BucketDirectory bucketDirectory) {
-        return bucketDirectory.getValue();
-    }
-
-    public static String getAsString(BucketPath bucketPath) {
-        return bucketPath.getValue();
-    }
-
     /**
      * Separiert alle Elemente. Doppelte Slashes werden ignoriert.
      */

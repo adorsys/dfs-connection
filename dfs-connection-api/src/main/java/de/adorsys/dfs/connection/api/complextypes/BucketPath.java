@@ -30,7 +30,7 @@ public class BucketPath {
         List<String> split = BucketPathUtil.split(path);
         if (!split.isEmpty()) {
             if (!split.isEmpty()) {
-                name = split.stream().map(b -> b).collect(Collectors.joining(BucketName.BUCKET_SEPARATOR));
+                name = split.stream().map(b -> b).collect(Collectors.joining(BucketPath.BUCKET_SEPARATOR));
             }
         } else {
             throw new BaseException("BucketPatb must not be empty:" + path);
@@ -71,7 +71,7 @@ public class BucketPath {
         String result;
         if (!split.isEmpty()) {
             if (!split.isEmpty()) {
-                return split.stream().map(b -> b).collect(Collectors.joining(BucketName.BUCKET_SEPARATOR));
+                return split.stream().map(b -> b).collect(Collectors.joining(BucketPath.BUCKET_SEPARATOR));
             }
         }
         return "";
@@ -86,7 +86,7 @@ public class BucketPath {
     public BucketDirectory getBucketDirectory() {
         int index = name.lastIndexOf(BUCKET_SEPARATOR);
         if (index == -1) {
-            return new BucketDirectory("/");
+            return new BucketDirectory(BucketPath.BUCKET_SEPARATOR);
         }
         return new BucketDirectory(name.substring(0, index));
     }

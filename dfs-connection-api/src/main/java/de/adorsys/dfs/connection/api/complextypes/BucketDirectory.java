@@ -17,10 +17,10 @@ public class BucketDirectory {
         List<String> split = BucketPathUtil.split(path);
         if (!split.isEmpty()) {
             if (!split.isEmpty()) {
-                name = split.stream().map(b -> b).collect(Collectors.joining(BucketName.BUCKET_SEPARATOR));
+                name = split.stream().map(b -> b).collect(Collectors.joining(BucketPath.BUCKET_SEPARATOR));
             }
         } else {
-            name = "/";
+            name = BucketPath.BUCKET_SEPARATOR;
         }
     }
 
@@ -49,19 +49,22 @@ public class BucketDirectory {
     }
 
     public String getContainer() {
-        if (name.length() == 1) {
+        if (isRoot()) {
             throw new BaseException("container can not be " + name);
         }
         return BucketPathUtil.split(name).get(0);
     }
 
+    public boolean isRoot() {
+        return name.equals(BucketPath.BUCKET_SEPARATOR);
+    }
     public String getName() {
         List<String> split = BucketPathUtil.split(name);
         split.remove(0);
         String result;
         if (!split.isEmpty()) {
             if (!split.isEmpty()) {
-                return split.stream().map(b -> b).collect(Collectors.joining(BucketName.BUCKET_SEPARATOR));
+                return split.stream().map(b -> b).collect(Collectors.joining(BucketPath.BUCKET_SEPARATOR));
             }
         }
         return "";
