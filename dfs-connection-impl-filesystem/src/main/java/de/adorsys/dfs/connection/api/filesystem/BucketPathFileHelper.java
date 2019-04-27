@@ -3,7 +3,6 @@ package de.adorsys.dfs.connection.api.filesystem;
 
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
-import de.adorsys.dfs.connection.api.domain.ObjectHandle;
 
 import java.io.File;
 
@@ -12,20 +11,17 @@ import java.io.File;
  */
 public class BucketPathFileHelper {
     static public File getAsFile(BucketPath bucketPath, boolean absolute) {
-        return getAsFile(bucketPath.getObjectHandle(), absolute);
+        return getAsFile(bucketPath.getValue(), absolute);
     }
 
     static public File getAsFile(BucketDirectory bucketPath, boolean absolute) {
-        return getAsFile(bucketPath.getObjectHandle(), absolute);
+        return getAsFile(bucketPath.getValue(), absolute);
     }
 
-    static public File getAsFile(ObjectHandle objectHandle, boolean absolute) {
-        String container = objectHandle.getContainer();
-        String name = objectHandle.getName();
-        String fullpath = container + BucketPath.BUCKET_SEPARATOR + name;
+    static public File getAsFile(String path, boolean absolute) {
         if (absolute) {
-            fullpath = BucketPath.BUCKET_SEPARATOR + fullpath;
+            path = BucketPath.BUCKET_SEPARATOR + path;
         }
-        return new File(fullpath);
+        return new File(path);
     }
 }

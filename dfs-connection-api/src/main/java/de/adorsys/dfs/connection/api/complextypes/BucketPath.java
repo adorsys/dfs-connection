@@ -1,12 +1,12 @@
 package de.adorsys.dfs.connection.api.complextypes;
 
-import de.adorsys.dfs.connection.api.domain.ObjectHandle;
-import de.adorsys.dfs.connection.api.exceptions.BucketException;
+import de.adorsys.common.exceptions.BaseException;
 import de.adorsys.dfs.connection.api.types.BucketName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -20,7 +20,6 @@ public class BucketPath {
     public final static String BUCKET_SEPARATOR = "/";
     private final static Logger LOGGER = LoggerFactory.getLogger(BucketPath.class);
 
-    String container = null;
     String name = null;
 
     /**
@@ -30,37 +29,15 @@ public class BucketPath {
     public BucketPath(String path) {
         List<String> split = BucketPathUtil.split(path);
         if (!split.isEmpty()) {
-            container = split.remove(0);
             if (!split.isEmpty()) {
-                name = split.stream().map(b -> b).collect(Collectors.joining(BucketName.BUCKET_SEPARATOR));
+                name = split.stream().map(b -> b).collect(Collectors.joining(BucketPath.BUCKET_SEPARATOR));
             }
         } else {
-            throw new BucketException("container must not be null");
-        }
-    }
-
-    /**
-     * container darf keinen Slash enthalten.
-     * path darf slashes enthalten
-     */
-    public BucketPath(String container, String path) {
-        if (container != null && notOnlyWhitespace(container)) {
-            if (container.indexOf(BUCKET_SEPARATOR) != -1) {
-                throw new BucketException("container " + container + " must not contain " + BUCKET_SEPARATOR);
-            }
-            this.container = container;
-        }
-        List<String> split = BucketPathUtil.split(path);
-        if (!split.isEmpty()) {
-            if (this.container == null) {
-                throw new BucketException("not allowed to create a bucketPath with a path but no container");
-            }
-            name = split.stream().map(b -> b).collect(Collectors.joining(BucketName.BUCKET_SEPARATOR));
+            throw new BaseException("BucketPatb must not be empty:" + path);
         }
     }
 
     public BucketPath(BucketPath bucketPath) {
-        this.container = bucketPath.container;
         this.name = bucketPath.name;
     }
 
@@ -69,30 +46,7 @@ public class BucketPath {
      * the BucketPath itself keeps untuched
      */
     public BucketPath append(BucketPath bucketPath) {
-        if (container == null) {
-            if (name != null) {
-                throw new BucketException("Programming Error. BucketPath must not exist with no container but a name " + name);
-            }
-            // Anhängen nicht nötig, daher einfach...
-            return bucketPath;
-        }
-        String appendedName = "";
-        if (name != null) {
-            appendedName = name;
-        }
-        if (bucketPath.container != null) {
-            if (appendedName.length() > 0) {
-                appendedName += BUCKET_SEPARATOR;
-            }
-            appendedName += bucketPath.container;
-        }
-        if (bucketPath.name != null) {
-            if (appendedName.length() > 0) {
-                appendedName += BUCKET_SEPARATOR;
-            }
-            appendedName += bucketPath.name;
-        }
-        return new BucketPath(container, appendedName);
+        return new BucketPath(name + BucketPath.BUCKET_SEPARATOR + bucketPath.name);
     }
 
     public BucketPath append(String path) {
@@ -100,71 +54,53 @@ public class BucketPath {
     }
 
     public BucketPath add(String suffix) {
-        if (name == null) {
-            throw new BucketException("add not possible, because name is null. container is " + container);
+        return new BucketPath(name + suffix);
+    }
+
+    public String getValue() {
+        return name;
+    }
+
+    public String getContainer() {
+        return BucketPathUtil.split(name).get(0);
+    }
+
+    public String getName() {
+        List<String> split = BucketPathUtil.split(name);
+        split.remove(0);
+        String result;
+        if (!split.isEmpty()) {
+            if (!split.isEmpty()) {
+                return split.stream().map(b -> b).collect(Collectors.joining(BucketPath.BUCKET_SEPARATOR));
+            }
         }
-        return new BucketPath(container, name + suffix);
+        return "";
     }
 
-    public ObjectHandle getObjectHandle() {
-        return new ObjectHandle(container, name);
-    }
-
-    public static BucketPath fromHandle(ObjectHandle objectHandle) {
-        return new BucketPath(objectHandle.getContainer(), objectHandle.getName());
-    }
 
     @Override
     public String toString() {
-        return "BucketPath{" + container + " - " + name + '}';
+        return "BucketPath{" + name + '}';
     }
 
     public BucketDirectory getBucketDirectory() {
-        ObjectHandle objectHandle = getObjectHandle();
-        String name = objectHandle.getName();
-        if (name == null) {
-            return new BucketDirectory("");
+        int index = name.lastIndexOf(BUCKET_SEPARATOR);
+        if (index == -1) {
+            return new BucketDirectory(BucketPath.BUCKET_SEPARATOR);
         }
-        BucketDirectory documentDirectory = new BucketDirectory(this.getObjectHandle().getContainer());
-        String directory = getDirectoryOf(name);
-        if (directory != null) {
-            documentDirectory = documentDirectory.appendDirectory(directory);
-        }
-        // LOGGER.debug("directory for path : " + documentDirectory + " for " + this);
-        return documentDirectory;
+        return new BucketDirectory(name.substring(0, index));
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof BucketPath)) return false;
-
+        if (o == null || getClass() != o.getClass()) return false;
         BucketPath that = (BucketPath) o;
-
-        if (!container.equals(that.container)) return false;
-        return name != null ? name.equals(that.name) : that.name == null;
-
+        return Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        int result = container.hashCode();
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        return result;
+        return Objects.hash(name);
     }
-
-
-    private static String getDirectoryOf(String value) {
-        int i = value.lastIndexOf(BucketPath.BUCKET_SEPARATOR);
-        if (i == -1) {
-            return null;
-        }
-        return value.substring(0, i);
-    }
-
-    private static boolean notOnlyWhitespace(String value) {
-        return value.replaceAll(" ", "").length() > 0;
-    }
-
-
 }

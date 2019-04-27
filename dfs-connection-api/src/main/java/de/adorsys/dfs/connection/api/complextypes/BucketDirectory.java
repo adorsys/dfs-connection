@@ -1,73 +1,90 @@
 package de.adorsys.dfs.connection.api.complextypes;
 
-import de.adorsys.dfs.connection.api.domain.ObjectHandle;
+import de.adorsys.common.exceptions.BaseException;
+import de.adorsys.dfs.connection.api.types.BucketName;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Created by peter on 29.01.18 at 14:40.
  */
-// Ist extra kein BucketPath, wenngleich es technisch so ist.
 public class BucketDirectory {
-    private BucketPath path;
+    private String name = null;
 
     public BucketDirectory(String path) {
-        this.path = new BucketPath(path);
+        List<String> split = BucketPathUtil.split(path);
+        if (!split.isEmpty()) {
+            if (!split.isEmpty()) {
+                name = split.stream().map(b -> b).collect(Collectors.joining(BucketPath.BUCKET_SEPARATOR));
+            }
+        } else {
+            name = BucketPath.BUCKET_SEPARATOR;
+        }
     }
 
     public BucketDirectory(BucketPath bucketPath) {
-        this.path = bucketPath;
+        this.name = bucketPath.name;
     }
 
     public BucketDirectory append(BucketDirectory directory) {
-        return new BucketDirectory(path.append(directory.path));
+        return new BucketDirectory(name + BucketPath.BUCKET_SEPARATOR + directory.name);
     }
 
     public BucketPath append(BucketPath bucketPath) {
-        return this.path.append(bucketPath);
+        return new BucketPath(name + BucketPath.BUCKET_SEPARATOR + bucketPath.name);
     }
 
     public BucketDirectory appendDirectory(String directory) {
-        if (directory != null) {
-            if (directory.length() == 1) {
-                if (directory.equals(BucketPath.BUCKET_SEPARATOR)) {
-                    return this;
-                }
-            }
-        }
-        return append(new BucketDirectory(directory));
+        return new BucketDirectory(name + BucketPath.BUCKET_SEPARATOR + directory);
     }
 
     public BucketPath appendName(String name) {
         return append(new BucketPath(name));
     }
 
-    public BucketPath addSuffix(String suffix) {
-        return path.add(suffix);
+    public String getValue() {
+        return name;
     }
 
-    public ObjectHandle getObjectHandle() {
-        return path.getObjectHandle();
+    public String getContainer() {
+        if (isRoot()) {
+            throw new BaseException("container can not be " + name);
+        }
+        return BucketPathUtil.split(name).get(0);
+    }
+
+    public boolean isRoot() {
+        return name.equals(BucketPath.BUCKET_SEPARATOR);
+    }
+    public String getName() {
+        List<String> split = BucketPathUtil.split(name);
+        split.remove(0);
+        String result;
+        if (!split.isEmpty()) {
+            if (!split.isEmpty()) {
+                return split.stream().map(b -> b).collect(Collectors.joining(BucketPath.BUCKET_SEPARATOR));
+            }
+        }
+        return "";
     }
 
     @Override
     public String toString() {
-        return "BucketDirectory{" +
-                "path=" + path +
-                '}';
+        return "BucketDirectory{" + name + '}';
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof BucketDirectory)) return false;
-
+        if (o == null || getClass() != o.getClass()) return false;
         BucketDirectory that = (BucketDirectory) o;
-
-        return path.equals(that.path);
-
+        return Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        return path.hashCode();
+        return Objects.hash(name);
     }
 }

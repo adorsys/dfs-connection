@@ -4,7 +4,6 @@ import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
 import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
-import de.adorsys.dfs.connection.api.types.ExtendedStoreConnectionType;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
 import de.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
 
@@ -25,15 +24,7 @@ public interface DFSConnection {
     void removeBlob(BucketPath bucketPath);
     void removeBlobFolder(BucketDirectory bucketDirectory);
 
-    void createContainer(BucketDirectory bucketDirectory);
-
-    boolean containerExists(BucketDirectory bucketDirectory);
-
-    void deleteContainer(BucketDirectory bucketDirectory);
-
     List<BucketPath> list(BucketDirectory bucketDirectory, ListRecursiveFlag listRecursiveFlag);
 
-    List<BucketDirectory> listAllBuckets();
-
-    ExtendedStoreConnectionType getType();
+    void deleteDatabase();
 }

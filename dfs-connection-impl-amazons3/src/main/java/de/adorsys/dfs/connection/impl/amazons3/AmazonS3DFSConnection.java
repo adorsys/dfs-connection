@@ -14,14 +14,11 @@ import de.adorsys.common.exceptions.BaseExceptionHandler;
 import de.adorsys.common.utils.Frame;
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
-import de.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
 import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
-import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
 import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
-import de.adorsys.dfs.connection.api.types.ExtendedStoreConnectionType;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3AccessKey;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3Region;
@@ -42,9 +39,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by peter on 17.09.18.
@@ -52,14 +47,10 @@ import java.util.Set;
 public class AmazonS3DFSConnection implements DFSConnection {
     private AmazonS3ConnectionProperitesImpl connectionProperties;
     private final static Logger LOGGER = LoggerFactory.getLogger(AmazonS3DFSConnection.class);
-    private static final Logger SPECIAL_LOGGER = LoggerFactory.getLogger("SPECIAL_LOGGER");
     private AmazonS3 connection = null;
     private final static String AMAZONS3_TMP_FILE_PREFIX = "AMAZONS3_TMP_FILE_";
     private final static String AMAZONS3_TMP_FILE_SUFFIX = "";
-    private static final String STORAGE_METADATA_KEY = "StorageMetadata";
-    private final static int AMAZON_S3_META_LIMIT = 1024 * 2;
     private BucketDirectory amazonS3RootBucket;
-    private BucketDirectory amazonS3RootContainersBucket;
     private AmazonS3Region amazonS3Region;
 
     public AmazonS3DFSConnection(AmazonS3ConnectionProperties properties) {
@@ -80,7 +71,6 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
         amazonS3Region = anAmazonS3Region;
         amazonS3RootBucket = new BucketDirectory(anAmazonS3RootBucketName.getValue());
-        amazonS3RootContainersBucket = new BucketDirectory(amazonS3RootBucket.getObjectHandle().getContainer() + ".cs");
         Frame frame = new Frame();
         frame.add("USE AMAZON S3 COMPLIANT SYSTEM");
         frame.add("(has be up and running)");
@@ -89,7 +79,6 @@ public class AmazonS3DFSConnection implements DFSConnection {
         frame.add("secretKey:        " + secretKey);
         frame.add("region:           " + amazonS3Region);
         frame.add("root bucket:      " + amazonS3RootBucket);
-        frame.add("container bucket: " + amazonS3RootContainersBucket);
         LOGGER.debug(frame.toString());
 
         AWSCredentialsProvider credentialsProvider = new AWSCredentialsProvider() {
@@ -118,11 +107,8 @@ public class AmazonS3DFSConnection implements DFSConnection {
                 .enablePathStyleAccess()
                 .build();
 
-        if (!connection.doesBucketExistV2(amazonS3RootBucket.getObjectHandle().getContainer())) {
-            connection.createBucket(amazonS3RootBucket.getObjectHandle().getContainer());
-        }
-        if (!connection.doesBucketExistV2(amazonS3RootContainersBucket.getObjectHandle().getContainer())) {
-            connection.createBucket(amazonS3RootContainersBucket.getObjectHandle().getContainer());
+        if (!connection.doesBucketExistV2(amazonS3RootBucket.getContainer())) {
+            connection.createBucket(amazonS3RootBucket.getContainer());
         }
     }
 
@@ -161,7 +147,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
         LOGGER.debug("getBlobStream " + abucketPath);
         BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
 
-        GetObjectRequest getObjectRequest = new GetObjectRequest(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName());
+        GetObjectRequest getObjectRequest = new GetObjectRequest(bucketPath.getContainer(), bucketPath.getName());
         S3Object object = connection.getObject(getObjectRequest);
         S3ObjectInputStream objectContent = object.getObjectContent();
         PayloadStream payloadStream = new SimplePayloadStreamImpl(objectContent);
@@ -176,7 +162,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
         // actually using exceptions is not nice, but it seems to be much faster than any list command
         try {
-            connection.getObjectMetadata(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName());
+            connection.getObjectMetadata(bucketPath.getContainer(), bucketPath.getName());
             LOGGER.debug("blob exists " + abucketPath + " TRUE");
             return true;
         } catch (AmazonS3Exception e) {
@@ -195,84 +181,32 @@ public class AmazonS3DFSConnection implements DFSConnection {
         LOGGER.debug("removeBlob " + abucketPath);
         BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
 
-        connection.deleteObject(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName());
+        connection.deleteObject(bucketPath.getContainer(), bucketPath.getName());
     }
 
     @Override
     public void removeBlobFolder(BucketDirectory bucketDirectory) {
         LOGGER.debug("removeBlobFolder " + bucketDirectory);
-        if (bucketDirectory.getObjectHandle().getName() == null) {
-            throw new StorageConnectionException("not a valid bucket directory " + bucketDirectory);
-        }
         internalRemoveMultiple(bucketDirectory);
-    }
-
-    @Override
-    public boolean containerExists(BucketDirectory bucketDirectory) {
-        BucketPath bucketPath = amazonS3RootContainersBucket.appendName(bucketDirectory.getObjectHandle().getContainer());
-        try {
-            // Nicht schön hier mit Exceptions zu arbeiten, aber schneller als mit list
-            connection.getObjectMetadata(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName());
-            LOGGER.debug("containerExists " + bucketDirectory + " TRUE");
-            return true;
-        } catch (AmazonS3Exception e) {
-            if (e.getMessage().contains("404 Not Found")) {
-                LOGGER.debug("containerExists " + bucketDirectory + " FALSE (EXCEPTION)");
-                return false;
-            }
-            throw BaseExceptionHandler.handle(e);
-        } catch (Exception e) {
-            throw BaseExceptionHandler.handle(e);
-        }
-    }
-
-    @Override
-    public void createContainer(BucketDirectory bucketDirectory) {
-        LOGGER.debug("createContainer " + bucketDirectory);
-
-        if (!containerExists(bucketDirectory)) {
-            BucketPath bucketPath = amazonS3RootContainersBucket.appendName(bucketDirectory.getObjectHandle().getContainer());
-
-            byte[] content = "x".getBytes();
-            LOGGER.debug("write " + bucketPath);
-            ObjectMetadata objectMetadata = new ObjectMetadata();
-            objectMetadata.setContentLength(content.length);
-            ByteArrayInputStream bis = new ByteArrayInputStream(content);
-
-            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketPath.getObjectHandle().getContainer(),
-                    bucketPath.getObjectHandle().getName(),
-                    bis, objectMetadata);
-            PutObjectResult putObjectResult = connection.putObject(putObjectRequest);
-            // LOGGER.debug("write of stream for :" + bucketPath + " -> " + putObjectResult.toString());
-        }
-    }
-
-
-    @Override
-    public void deleteContainer(BucketDirectory bucketDirectory) {
-        LOGGER.debug("deleteContainer " + bucketDirectory);
-        internalRemoveMultiple(new BucketDirectory(bucketDirectory.getObjectHandle().getContainer()));
     }
 
     @Override
     public List<BucketPath> list(BucketDirectory abucketDirectory, ListRecursiveFlag listRecursiveFlag) {
         LOGGER.debug("list " + abucketDirectory);
         List<BucketPath> returnList = new ArrayList<>();
-        if (!containerExists(abucketDirectory)) {
-            LOGGER.debug("return empty list for " + abucketDirectory);
-            return returnList;
-        }
 
-        if (blobExists(new BucketPath(BucketPathUtil.getAsString(abucketDirectory)))) {
-            // diese If-Abfrage dient dem Spezialfall, dass jemand einen BucketPath als BucketDirectory uebergeben hat.
-            // Dann gibt es diesen bereits als file, dann muss eine leere Liste zurücgeben werden
-            return new ArrayList<>();
+        if (!abucketDirectory.isRoot()) {
+            if (blobExists(new BucketPath(abucketDirectory.getValue()))) {
+                // diese If-Abfrage dient dem Spezialfall, dass jemand einen BucketPath als BucketDirectory uebergeben hat.
+                // Dann gibt es diesen bereits als file, dann muss eine leere Liste zurücgeben werden
+                return returnList;
+            }
         }
 
         BucketDirectory bucketDirectory = amazonS3RootBucket.append(abucketDirectory);
 
-        String container = bucketDirectory.getObjectHandle().getContainer();
-        String prefix = bucketDirectory.getObjectHandle().getName();
+        String container = bucketDirectory.getContainer();
+        String prefix = bucketDirectory.getName();
         if (prefix == null) {
             prefix = BucketPath.BUCKET_SEPARATOR;
         } else {
@@ -284,34 +218,18 @@ public class AmazonS3DFSConnection implements DFSConnection {
         ObjectListing ol = connection.listObjects(container, searchKey);
         final List<String> keys = new ArrayList<>();
         ol.getObjectSummaries().forEach(el -> keys.add(BucketPath.BUCKET_SEPARATOR + el.getKey()));
-        returnList = filter(container, prefix, keys, listRecursiveFlag);
+        returnList = filter(amazonS3RootBucket, abucketDirectory, prefix, keys, listRecursiveFlag);
         return returnList;
     }
 
     @Override
-    public List<BucketDirectory> listAllBuckets() {
-        LOGGER.debug("listAllBuckets");
-        List<BucketDirectory> buckets = new ArrayList<>();
-        ObjectListing ol = connection.listObjects(amazonS3RootContainersBucket.getObjectHandle().getContainer());
-        ol.getObjectSummaries().forEach(bucket -> buckets.add(new BucketDirectory(bucket.getKey())));
-        return buckets;
-    }
-
-    @Override
-    public ExtendedStoreConnectionType getType() {
-        return ExtendedStoreConnectionType.AMAZONS3;
-    }
-
-    public void cleanDatabase() {
-        LOGGER.warn("DELETE DATABASE");
-        for (BucketDirectory bucketDirectory : listAllBuckets()) {
-            deleteContainer(bucketDirectory);
-        }
+    public void deleteDatabase() {
+        removeBlobFolder(amazonS3RootBucket);
     }
 
     public void showDatabase() {
         try {
-            ObjectListing ol = connection.listObjects(amazonS3RootBucket.getObjectHandle().getContainer());
+            ObjectListing ol = connection.listObjects(amazonS3RootBucket.getContainer());
             List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
             for (S3ObjectSummary key : ol.getObjectSummaries()) {
                 LOGGER.debug(key.getKey());
@@ -324,57 +242,36 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
     // ==========================================================================
 
-    List<BucketPath> filter(String container, String prefix, final List<String> keys, ListRecursiveFlag recursive) {
+    List<BucketPath> filter(BucketDirectory rootBucketName, BucketDirectory searchDirectory, String prefix, final List<String> keys, ListRecursiveFlag recursive) {
+        String rootDirectoryString = rootBucketName.getValue();
+        String searchDirectoryString = searchDirectory.getValue();
+        LOGGER.debug("recursive is " + recursive);
+        LOGGER.debug("prefix    is " + prefix);
+        LOGGER.debug("rootdir   is " + rootDirectoryString);
+        LOGGER.debug("searchdir is " + searchDirectoryString);
+        showKeys("keys before filter", keys);
         List<BucketPath> result = new ArrayList<>();
-        Set<String> dirs = new HashSet<>();
 
         // showKeys(keys);
         int numberOfDelimitersOfPrefix = StringUtils.countMatches(prefix, BucketPath.BUCKET_SEPARATOR);
-        if (prefix.length() > BucketPath.BUCKET_SEPARATOR.length()) {
+        if (searchDirectoryString.length() > BucketPath.BUCKET_SEPARATOR.length()) {
             numberOfDelimitersOfPrefix++;
         }
         int numberOfDelimitersExpected = numberOfDelimitersOfPrefix;
 
         keys.forEach(key -> {
             if (recursive.equals(ListRecursiveFlag.TRUE)) {
-                result.add(new BucketPath(key));
+                String keyWithoutPrefix = key.substring(prefix.length());
+                result.add(searchDirectory.appendName(keyWithoutPrefix));
             } else {
                 int numberOfDelimitersOfKey = StringUtils.countMatches(key, BucketPath.BUCKET_SEPARATOR);
                 if (numberOfDelimitersOfKey == numberOfDelimitersExpected) {
-                    result.add(new BucketPath(key));
+                    String keyWithoutPrefix = key.substring(prefix.length());
+                    result.add(searchDirectory.appendName(keyWithoutPrefix));
                 }
             }
-
-            if (recursive.equals(ListRecursiveFlag.TRUE)) {
-                int fromIndex = prefix.length();
-                while (fromIndex != -1) {
-                    fromIndex = key.indexOf(BucketPath.BUCKET_SEPARATOR, fromIndex + 1);
-                    if (fromIndex != -1) {
-                        String dir = key.substring(0, fromIndex);
-                        if (dir.length() == 0) {
-                            dir = BucketPath.BUCKET_SEPARATOR;
-                        }
-                        dirs.add(dir);
-                    }
-                }
-            } else {
-                int fromIndex = prefix.length();
-                int counter = 0;
-                while (fromIndex != -1 && counter < 1) {
-                    fromIndex = key.indexOf(BucketPath.BUCKET_SEPARATOR, fromIndex + 1);
-                    if (fromIndex != -1) {
-                        counter++;
-                        String dir = key.substring(0, fromIndex);
-                        if (dir.length() == 0) {
-                            dir = BucketPath.BUCKET_SEPARATOR;
-                        }
-                        dirs.add(dir);
-                    }
-                }
-            }
-
         });
-        showResult(result);
+        showResult("after filter", result);
         return result;
     }
 
@@ -388,8 +285,8 @@ public class AmazonS3DFSConnection implements DFSConnection {
             BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
 
             PutObjectRequest putObjectRequest = new PutObjectRequest(
-                    bucketPath.getObjectHandle().getContainer(),
-                    bucketPath.getObjectHandle().getName(),
+                    bucketPath.getContainer(),
+                    bucketPath.getName(),
                     payloadStream.openStream(),
                     objectMetadata);
             PutObjectResult putObjectResult = connection.putObject(putObjectRequest);
@@ -417,7 +314,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
                 BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
 
-                PutObjectRequest putObjectRequest = new PutObjectRequest(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName(), fis, objectMetadata);
+                PutObjectRequest putObjectRequest = new PutObjectRequest(bucketPath.getContainer(), bucketPath.getName(), fis, objectMetadata);
                 PutObjectResult putObjectResult = connection.putObject(putObjectRequest);
                 LOGGER.debug("stored " + bucketPath + " to ceph with size " + targetFile.length());
             }
@@ -435,14 +332,10 @@ public class AmazonS3DFSConnection implements DFSConnection {
      */
     private void internalRemoveMultiple(BucketDirectory abucketDirectory) {
         LOGGER.debug("internalRemoveMultiple " + abucketDirectory);
-        if (!containerExists(abucketDirectory)) {
-            return;
-        }
-
         BucketDirectory bucketDirectory = amazonS3RootBucket.append(abucketDirectory);
 
-        String container = bucketDirectory.getObjectHandle().getContainer();
-        String prefix = bucketDirectory.getObjectHandle().getName();
+        String container = bucketDirectory.getContainer();
+        String prefix = bucketDirectory.getName();
         if (prefix == null) {
             prefix = "";
         }
@@ -475,21 +368,17 @@ public class AmazonS3DFSConnection implements DFSConnection {
             DeleteObjectsResult deleteObjectsResult = connection.deleteObjects(deleteObjectsRequest);
             LOGGER.debug("SERVER CONFIRMED DELETION OF " + deleteObjectsResult.getDeletedObjects().size() + " elements");
         }
-        if (abucketDirectory.getObjectHandle().getName() == null) {
-            BucketPath containerFile = amazonS3RootContainersBucket.appendName(abucketDirectory.getObjectHandle().getContainer());
-            connection.deleteObject(containerFile.getObjectHandle().getContainer(), containerFile.getObjectHandle().getName());
-        }
     }
 
-    private void showResult(List<BucketPath> result) {
-        LOGGER.debug("nachher:");
+    private void showResult(String message, List<BucketPath> result) {
+        LOGGER.debug(message);
         result.forEach(el -> {
             LOGGER.debug(el.toString());
         });
     }
 
-    private void showKeys(List<String> keys) {
-        LOGGER.debug("vorher");
+    private void showKeys(String message, List<String> keys) {
+        LOGGER.debug(message);
         keys.forEach(el -> {
             LOGGER.debug(el);
         });
