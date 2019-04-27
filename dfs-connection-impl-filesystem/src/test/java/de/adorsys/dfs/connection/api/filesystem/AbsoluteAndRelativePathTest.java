@@ -1,7 +1,6 @@
 package de.adorsys.dfs.connection.api.filesystem;
 
 import de.adorsys.common.exceptions.BaseExceptionHandler;
-import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
 import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
@@ -29,7 +28,6 @@ public class AbsoluteAndRelativePathTest {
             LOGGER.debug("relative Dir to be created is (absoute):" + relativeDirAsAbsoluteDir);
             Assert.assertFalse(new File(relativeDirAsAbsoluteDir).exists());
             DFSConnection con = new FileSystemDFSConnection(new FilesystemRootBucketName(mydir));
-            con.createContainer(new BucketDirectory("home"));
             con.putBlob(new BucketPath("/home/file1.txt"), new SimplePayloadImpl("affe".getBytes()));
             Assert.assertTrue(new File(relativeDirAsAbsoluteDir).exists());
 
@@ -59,7 +57,6 @@ public class AbsoluteAndRelativePathTest {
             LOGGER.debug("my absolute path " + absoluteDir);
             Assert.assertFalse(new File(absoluteDir).exists());
             DFSConnection con = new FileSystemDFSConnection(new FilesystemRootBucketName(absoluteDir));
-            con.createContainer(new BucketDirectory("home"));
             con.putBlob(new BucketPath("/home/file1.txt"), new SimplePayloadImpl("affe".getBytes()));
             LOGGER.debug(absoluteDir);
             Assert.assertTrue(new File(absoluteDir).exists());

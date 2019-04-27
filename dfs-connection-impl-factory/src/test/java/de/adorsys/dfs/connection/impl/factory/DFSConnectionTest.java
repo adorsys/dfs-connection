@@ -7,7 +7,6 @@ import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
 import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
-import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
 import de.adorsys.dfs.connection.api.filesystem.FilesystemConnectionPropertiesImpl;
 import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
@@ -51,7 +50,7 @@ public class DFSConnectionTest {
         for (BucketDirectory c : containers) {
             try {
                 LOGGER.debug("AFTER TEST DELETE CONTAINER " + c);
-                s.deleteContainer(c);
+                s.removeBlobFolder(c);
             } catch (Exception e) {
                 // ignore
             }
@@ -60,8 +59,7 @@ public class DFSConnectionTest {
 
     @Test
     public void cleanDB() {
-        DFSConnection c = DFSConnectionFactory.get();
-        c.listAllBuckets().forEach(el -> c.deleteContainer(el));
+        s.deleteDatabase();
     }
 
     /*
@@ -73,8 +71,6 @@ public class DFSConnectionTest {
         BucketDirectory bd = new BucketDirectory("test-container-exists");
         containers.add(bd);
 
-        Assert.assertFalse(s.containerExists(bd));
-        s.createContainer(bd);
         try {
             LOGGER.debug("you have 10 secs to kill the connection");
             Thread.currentThread().sleep(10000);
@@ -82,9 +78,6 @@ public class DFSConnectionTest {
         } catch (Exception e) {
             throw BaseExceptionHandler.handle(e);
         }
-
-        Assert.assertTrue(s.containerExists(bd));
-        containers.add(bd);
 
         BucketPath file = bd.appendName("file.txt");
         Assert.assertFalse(s.blobExists(file));
@@ -107,7 +100,6 @@ public class DFSConnectionTest {
     @Test
     public void testListSubfolderRecursive() {
         BucketDirectory bd = new BucketDirectory("test_list_subfolder");
-        s.createContainer(bd);
         containers.add(bd);
 
         BucketPath file = bd.appendName("/empty1/empty2/file.txt");
@@ -140,7 +132,6 @@ public class DFSConnectionTest {
     @Test
     public void testListSubfolderNonRecursive() {
         BucketDirectory bd = new BucketDirectory("test_list_subfolder");
-        s.createContainer(bd);
         containers.add(bd);
 
         BucketPath file = bd.appendName("/empty1/empty2/file.txt");
@@ -185,7 +176,6 @@ public class DFSConnectionTest {
     @Test
     public void testList2() {
         BucketDirectory bd = new BucketDirectory("affe2");
-        s.createContainer(bd);
         containers.add(bd);
 
         List<BucketPath> files = s.list(bd, ListRecursiveFlag.FALSE);
@@ -210,7 +200,6 @@ public class DFSConnectionTest {
             i--;
         }
         BucketDirectory bd = new BucketDirectory("affe3");
-        s.createContainer(bd);
         containers.add(bd);
         for (int j = 0; j < REPEATS; j++) {
             BucketPath file = bd.appendName("file1");
@@ -255,7 +244,6 @@ public class DFSConnectionTest {
     @Test
     public void testList5() {
         BucketDirectory bd = new BucketDirectory("affe5");
-        s.createContainer(bd);
         containers.add(bd);
 
         BucketPath file = bd.appendName("file1");
@@ -274,7 +262,6 @@ public class DFSConnectionTest {
     @Test
     public void testList6() {
         BucketDirectory bd = new BucketDirectory("affe6/1/2/3");
-        s.createContainer(bd);
         containers.add(bd);
 
         s.putBlob(bd.append(new BucketPath("filea")), new SimplePayloadImpl("Inhalt".getBytes()));
@@ -301,7 +288,6 @@ public class DFSConnectionTest {
     @Test
     public void testList7() {
         BucketDirectory bd = new BucketDirectory("affe7/1/2/3");
-        s.createContainer(bd);
         containers.add(bd);
 
         s.putBlob(bd.append(new BucketPath("subdir1/filea")), new SimplePayloadImpl("Inhalt".getBytes()));
@@ -318,16 +304,13 @@ public class DFSConnectionTest {
 
     @Test
     public void deleteDatabase() {
-        if (s instanceof AmazonS3DFSConnection) {
-            ((AmazonS3DFSConnection) s).cleanDatabase();
-        }
+        s.deleteDatabase();
     }
 
     @Test
     public void testDeleteFolder() {
         LOGGER.debug("START TEST " + new RuntimeException("").getStackTrace()[0].getMethodName());
         BucketDirectory bd = new BucketDirectory("deletedeep");
-        s.createContainer(bd);
         containers.add(bd);
 
         /**
@@ -353,9 +336,7 @@ public class DFSConnectionTest {
 
         Assert.assertEquals(filesOnlyAllNew.size() + filesOnly00.size(), filesOnlyAll.size());
 
-        if (s instanceof AmazonS3DFSConnection) {
-            ((AmazonS3DFSConnection) s).cleanDatabase();
-        }
+        s.deleteDatabase();
     }
 
     /**
@@ -366,7 +347,6 @@ public class DFSConnectionTest {
         LOGGER.debug("START TEST " + new RuntimeException("").getStackTrace()[0].getMethodName());
 
         BucketDirectory bd = new BucketDirectory("bucket8");
-        s.createContainer(bd);
         containers.add(bd);
 
         List<BucketPath> list = createFiles(s, bd, 3, 2, 3);
@@ -427,15 +407,10 @@ public class DFSConnectionTest {
         }
 
         {
-            // Extra nicht mit expected Annotation, damit diese Exception niecht vorher schon zum
-            // Abbruch anderern Tests führt
-            boolean testOk = false;
-            try {
-                s.removeBlobFolder(bd);
-            } catch (StorageConnectionException e) {
-                testOk = true;
-            }
-            Assert.assertTrue(testOk);
+            LOGGER.debug("test8 start subtest 7");
+            s.removeBlobFolder(bd);
+            List<BucketPath> files = s.list(bd, ListRecursiveFlag.TRUE);
+            Assert.assertTrue(files.isEmpty());
         }
 
     }
@@ -471,7 +446,6 @@ public class DFSConnectionTest {
     @Test
     public void testOverwrite() {
         BucketDirectory bd = new BucketDirectory("bucketoverwrite/1/2/3");
-        s.createContainer(bd);
         containers.add(bd);
 
         BucketPath filea = bd.append(new BucketPath("filea"));
@@ -487,34 +461,8 @@ public class DFSConnectionTest {
     }
 
     @Test
-    public void testListAllBuckets() {
-        cleanDB();
-
-        List<BucketDirectory> mybuckets = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            BucketDirectory bd = new BucketDirectory("bucket" + i);
-            mybuckets.add(bd);
-            containers.add(bd);
-            s.createContainer(bd);
-
-            Payload origPayload = new SimplePayloadImpl("1".getBytes());
-            BucketPath file1 = bd.append(new BucketPath("dir1/file1"));
-            s.putBlob(file1, origPayload);
-            BucketPath file2 = bd.append(new BucketPath("dir1/file2"));
-            s.putBlob(file2, origPayload);
-
-        }
-        List<BucketDirectory> foundBuckets = s.listAllBuckets();
-        mybuckets.forEach(b -> LOGGER.debug("created bucket " + b));
-        foundBuckets.forEach(b -> LOGGER.debug("found bucket " + b));
-        Assert.assertTrue(foundBuckets.containsAll(mybuckets));
-        Assert.assertTrue(mybuckets.containsAll(foundBuckets));
-    }
-
-    @Test
     public void testFileExists() {
         BucketDirectory bd = new BucketDirectory("bucketfileexiststest");
-        s.createContainer(bd);
         containers.add(bd);
 
         BucketPath filea = bd.append(new BucketPath("file1"));
@@ -531,7 +479,6 @@ public class DFSConnectionTest {
         LOGGER.debug("START TEST " + new RuntimeException("").getStackTrace()[0].getMethodName());
         BucketPath bucketPath = new BucketPath("user1/.hidden/Affenfile.txt");
         byte[] documentContent = "Affe".getBytes();
-        s.createContainer(bucketPath.getBucketDirectory());
         s.putBlob(bucketPath, new SimplePayloadImpl(documentContent));
         BucketDirectory bd = new BucketDirectory(bucketPath);
         LOGGER.debug("bucketPath " + bucketPath);
@@ -546,10 +493,9 @@ public class DFSConnectionTest {
         LOGGER.debug("START TEST " + new RuntimeException("").getStackTrace()[0].getMethodName());
         BucketPath bucketPath = new BucketPath("user1/.hidden/Affenfile.txt");
         byte[] documentContent = "Affe".getBytes();
-        s.createContainer(bucketPath.getBucketDirectory());
         s.putBlob(bucketPath, new SimplePayloadImpl(documentContent));
-        s.deleteContainer(bucketPath.getBucketDirectory());
-        s.deleteContainer(bucketPath.getBucketDirectory());
+        s.removeBlobFolder(bucketPath.getBucketDirectory());
+        s.removeBlobFolder(bucketPath.getBucketDirectory());
     }
 
 
@@ -558,7 +504,6 @@ public class DFSConnectionTest {
         for (int i = 0; i < 200; i++) {
             BucketDirectory bd = new BucketDirectory("bucket" + i);
             containers.add(bd);
-            s.createContainer(bd);
         }
     }
 
@@ -567,7 +512,6 @@ public class DFSConnectionTest {
         try {
             BucketPath bucketPath = new BucketPath("user1/.hidden/Affenfile.txt");
             byte[] content = "Affe".getBytes();
-            s.createContainer(bucketPath.getBucketDirectory());
             try (ByteArrayInputStream bis = new ByteArrayInputStream(content)) {
                 s.putBlobStream(bucketPath, new SimplePayloadStreamImpl(bis));
                 LOGGER.debug("successfully stored stream content: " + HexUtil.convertBytesToHexString(content));
@@ -579,7 +523,7 @@ public class DFSConnectionTest {
             }
 
             Assert.assertArrayEquals(content, readContent);
-            s.deleteContainer(bucketPath.getBucketDirectory());
+            s.removeBlobFolder(bucketPath.getBucketDirectory());
 
         } catch (Exception e) {
             throw BaseExceptionHandler.handle(e);

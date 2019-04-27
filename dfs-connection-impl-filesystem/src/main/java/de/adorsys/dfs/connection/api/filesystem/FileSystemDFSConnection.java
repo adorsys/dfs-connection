@@ -1,18 +1,16 @@
 package de.adorsys.dfs.connection.api.filesystem;
 
-import de.adorsys.common.exceptions.BaseException;
 import de.adorsys.common.exceptions.BaseExceptionHandler;
 import de.adorsys.common.utils.Frame;
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
 import de.adorsys.dfs.connection.api.complextypes.BucketPath;
 import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
-import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
-import de.adorsys.dfs.connection.api.filesystem.exceptions.*;
+import de.adorsys.dfs.connection.api.filesystem.exceptions.DeleteFileException;
+import de.adorsys.dfs.connection.api.filesystem.exceptions.FileIsFolderException;
 import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
-import de.adorsys.dfs.connection.api.types.ExtendedStoreConnectionType;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
 import de.adorsys.dfs.connection.api.types.connection.FilesystemRootBucketName;
 import de.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
@@ -68,54 +66,6 @@ public class FileSystemDFSConnection implements DFSConnection {
         }
     }
 
-
-    @Override
-    public void createContainer(BucketDirectory bucketDirectory) {
-        LOGGER.debug("createContainer " + bucketDirectory);
-        String containerOnly = bucketDirectory.getObjectHandle().getContainer();
-
-        File file = BucketPathFileHelper.getAsFile(baseDir.appendDirectory(containerOnly), absolutePath);
-        if (file.isDirectory()) {
-            LOGGER.debug("directory already exists:" + file);
-            return;
-        }
-        boolean success = file.mkdirs();
-        if (!success) {
-            throw new CreateFolderException("Can not create directory " + file);
-        }
-        LOGGER.debug("created folder " + file);
-    }
-
-    @Override
-    public boolean containerExists(BucketDirectory bucketDirectory) {
-        File file = BucketPathFileHelper.getAsFile(baseDir.appendDirectory(bucketDirectory.getObjectHandle().getContainer()), absolutePath);
-        if (file.isDirectory()) {
-            LOGGER.debug("directory exists:" + file);
-            return true;
-        }
-        if (file.isFile()) {
-            throw new FolderIsAFileException("folder is a file " + file);
-        }
-        LOGGER.debug("directory does not exists" + file);
-        return false;
-    }
-
-
-    @Override
-    public void deleteContainer(BucketDirectory container) {
-        LOGGER.debug("deleteContainer " + container);
-        File file = BucketPathFileHelper.getAsFile(baseDir.appendDirectory(container.getObjectHandle().getContainer()), absolutePath);
-        if (!containerExists(container)) {
-            LOGGER.debug("directory does not exist. so nothing to delete:" + file);
-            return;
-        }
-        try {
-            FileUtils.deleteDirectory(file);
-        } catch (IOException e) {
-            throw new FolderDeleteException("can not delete " + file, e);
-        }
-    }
-
     @Override
     public boolean blobExists(BucketPath bucketPath) {
         LOGGER.debug("blobExists " + bucketPath);
@@ -149,24 +99,8 @@ public class FileSystemDFSConnection implements DFSConnection {
     }
 
     @Override
-    public List<BucketDirectory> listAllBuckets() {
-        LOGGER.debug("listAllbuckeets");
-        try {
-            List<BucketDirectory> list = new ArrayList<>();
-            String[] dirs = BucketPathFileHelper.getAsFile(baseDir, absolutePath).list(new DirectoryFilenameFilter());
-            if (dirs == null) {
-                return list;
-            }
-            Arrays.stream(dirs).forEach(dir -> list.add(new BucketDirectory(dir)));
-            return list;
-        } catch (Exception e) {
-            throw BaseExceptionHandler.handle(e);
-        }
-    }
-
-    @Override
-    public ExtendedStoreConnectionType getType() {
-        return ExtendedStoreConnectionType.FILESYSTEM;
+    public void deleteDatabase() {
+        removeBlobFolder(baseDir);
     }
 
     @Override
@@ -177,21 +111,18 @@ public class FileSystemDFSConnection implements DFSConnection {
     @Override
     public void putBlob(BucketPath bucketPath, Payload payload) {
         LOGGER.debug("putBlob " + bucketPath);
-        checkContainerExists(bucketPath);
         fileHelper.writePayload(bucketPath, new SimplePayloadImpl(payload));
     }
 
     @Override
     public Payload getBlob(BucketPath bucketPath) {
         LOGGER.debug("getBlob " + bucketPath);
-        checkContainerExists(bucketPath);
         return fileHelper.readPayload(bucketPath);
     }
 
     @Override
     public void putBlobStream(BucketPath bucketPath, PayloadStream payloadStream) {
         LOGGER.debug("putBlobStream " + bucketPath);
-        checkContainerExists(bucketPath);
         fileHelper.writePayloadStream(bucketPath, new SimplePayloadStreamImpl(payloadStream));
 
     }
@@ -199,14 +130,12 @@ public class FileSystemDFSConnection implements DFSConnection {
     @Override
     public PayloadStream getBlobStream(BucketPath bucketPath) {
         LOGGER.debug("getBlobStrea " + bucketPath);
-        checkContainerExists(bucketPath);
         return fileHelper.readPayloadStream(bucketPath);
     }
 
     @Override
     public void removeBlob(BucketPath bucketPath) {
         LOGGER.debug("removeBlob " + bucketPath);
-        checkContainerExists(bucketPath);
         File file = BucketPathFileHelper.getAsFile(baseDir.append(bucketPath), absolutePath);
         if (!file.exists()) {
             return;
@@ -221,10 +150,6 @@ public class FileSystemDFSConnection implements DFSConnection {
     @Override
     public void removeBlobFolder(BucketDirectory bucketDirectory) {
         LOGGER.debug("removeBlobFolder " + bucketDirectory);
-        checkContainerExists(bucketDirectory);
-        if (bucketDirectory.getObjectHandle().getName() == null) {
-            throw new StorageConnectionException("not a valid bucket directory " + bucketDirectory);
-        }
         File directory = BucketPathFileHelper.getAsFile(baseDir.append(bucketDirectory), absolutePath);
         LOGGER.debug("remove directory " + directory.getAbsolutePath());
         if (!directory.exists()) {
@@ -240,18 +165,6 @@ public class FileSystemDFSConnection implements DFSConnection {
 
     /* ===========================================================================================================
      */
-
-    private void checkContainerExists(BucketPath bucketPath) {
-        if (!containerExists(bucketPath.getBucketDirectory())) {
-            throw new BaseException("Container " + bucketPath.getObjectHandle().getContainer() + " does not exist");
-        }
-    }
-
-    private void checkContainerExists(BucketDirectory bucketDirectory) {
-        if (!containerExists(bucketDirectory)) {
-            throw new BaseException("Container " + bucketDirectory.getObjectHandle().getContainer() + " does not exist");
-        }
-    }
 
     private final static class DirectoryFilenameFilter implements FilenameFilter {
         @Override

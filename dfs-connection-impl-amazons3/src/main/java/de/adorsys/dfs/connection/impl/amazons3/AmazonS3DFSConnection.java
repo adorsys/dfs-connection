@@ -17,11 +17,9 @@ import de.adorsys.dfs.connection.api.complextypes.BucketPath;
 import de.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
 import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
-import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
 import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
-import de.adorsys.dfs.connection.api.types.ExtendedStoreConnectionType;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3AccessKey;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3Region;
@@ -42,9 +40,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by peter on 17.09.18.
@@ -56,7 +52,6 @@ public class AmazonS3DFSConnection implements DFSConnection {
     private final static String AMAZONS3_TMP_FILE_PREFIX = "AMAZONS3_TMP_FILE_";
     private final static String AMAZONS3_TMP_FILE_SUFFIX = "";
     private BucketDirectory amazonS3RootBucket;
-    private BucketDirectory amazonS3RootContainersBucket;
     private AmazonS3Region amazonS3Region;
 
     public AmazonS3DFSConnection(AmazonS3ConnectionProperties properties) {
@@ -77,7 +72,6 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
         amazonS3Region = anAmazonS3Region;
         amazonS3RootBucket = new BucketDirectory(anAmazonS3RootBucketName.getValue());
-        amazonS3RootContainersBucket = new BucketDirectory(amazonS3RootBucket.getObjectHandle().getContainer() + ".cs");
         Frame frame = new Frame();
         frame.add("USE AMAZON S3 COMPLIANT SYSTEM");
         frame.add("(has be up and running)");
@@ -86,7 +80,6 @@ public class AmazonS3DFSConnection implements DFSConnection {
         frame.add("secretKey:        " + secretKey);
         frame.add("region:           " + amazonS3Region);
         frame.add("root bucket:      " + amazonS3RootBucket);
-        frame.add("container bucket: " + amazonS3RootContainersBucket);
         LOGGER.debug(frame.toString());
 
         AWSCredentialsProvider credentialsProvider = new AWSCredentialsProvider() {
@@ -117,9 +110,6 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
         if (!connection.doesBucketExistV2(amazonS3RootBucket.getObjectHandle().getContainer())) {
             connection.createBucket(amazonS3RootBucket.getObjectHandle().getContainer());
-        }
-        if (!connection.doesBucketExistV2(amazonS3RootContainersBucket.getObjectHandle().getContainer())) {
-            connection.createBucket(amazonS3RootContainersBucket.getObjectHandle().getContainer());
         }
     }
 
@@ -198,67 +188,20 @@ public class AmazonS3DFSConnection implements DFSConnection {
     @Override
     public void removeBlobFolder(BucketDirectory bucketDirectory) {
         LOGGER.debug("removeBlobFolder " + bucketDirectory);
-        if (bucketDirectory.getObjectHandle().getName() == null) {
-            throw new StorageConnectionException("not a valid bucket directory " + bucketDirectory);
-        }
         internalRemoveMultiple(bucketDirectory);
-    }
-
-    @Override
-    public boolean containerExists(BucketDirectory bucketDirectory) {
-        BucketPath bucketPath = amazonS3RootContainersBucket.appendName(bucketDirectory.getObjectHandle().getContainer());
-        try {
-            // Nicht schön hier mit Exceptions zu arbeiten, aber schneller als mit list
-            connection.getObjectMetadata(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName());
-            LOGGER.debug("containerExists " + bucketDirectory + " TRUE");
-            return true;
-        } catch (AmazonS3Exception e) {
-            if (e.getMessage().contains("404 Not Found")) {
-                LOGGER.debug("containerExists " + bucketDirectory + " FALSE (EXCEPTION)");
-                return false;
-            }
-            throw BaseExceptionHandler.handle(e);
-        } catch (Exception e) {
-            throw BaseExceptionHandler.handle(e);
-        }
-    }
-
-    @Override
-    public void createContainer(BucketDirectory bucketDirectory) {
-        LOGGER.debug("createContainer " + bucketDirectory);
-
-        if (!containerExists(bucketDirectory)) {
-            BucketPath bucketPath = amazonS3RootContainersBucket.appendName(bucketDirectory.getObjectHandle().getContainer());
-
-            byte[] content = "x".getBytes();
-            LOGGER.debug("write " + bucketPath);
-            ObjectMetadata objectMetadata = new ObjectMetadata();
-            objectMetadata.setContentLength(content.length);
-            ByteArrayInputStream bis = new ByteArrayInputStream(content);
-
-            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketPath.getObjectHandle().getContainer(),
-                    bucketPath.getObjectHandle().getName(),
-                    bis, objectMetadata);
-            PutObjectResult putObjectResult = connection.putObject(putObjectRequest);
-            // LOGGER.debug("write of stream for :" + bucketPath + " -> " + putObjectResult.toString());
-        }
-    }
-
-
-    @Override
-    public void deleteContainer(BucketDirectory bucketDirectory) {
-        LOGGER.debug("deleteContainer " + bucketDirectory);
-        internalRemoveMultiple(new BucketDirectory(bucketDirectory.getObjectHandle().getContainer()));
     }
 
     @Override
     public List<BucketPath> list(BucketDirectory abucketDirectory, ListRecursiveFlag listRecursiveFlag) {
         LOGGER.debug("list " + abucketDirectory);
         List<BucketPath> returnList = new ArrayList<>();
+        /*
         if (!containerExists(abucketDirectory)) {
             LOGGER.debug("return empty list for " + abucketDirectory);
             return returnList;
         }
+
+         */
 
         if (blobExists(new BucketPath(BucketPathUtil.getAsString(abucketDirectory)))) {
             // diese If-Abfrage dient dem Spezialfall, dass jemand einen BucketPath als BucketDirectory uebergeben hat.
@@ -286,24 +229,8 @@ public class AmazonS3DFSConnection implements DFSConnection {
     }
 
     @Override
-    public List<BucketDirectory> listAllBuckets() {
-        LOGGER.debug("listAllBuckets");
-        List<BucketDirectory> buckets = new ArrayList<>();
-        ObjectListing ol = connection.listObjects(amazonS3RootContainersBucket.getObjectHandle().getContainer());
-        ol.getObjectSummaries().forEach(bucket -> buckets.add(new BucketDirectory(bucket.getKey())));
-        return buckets;
-    }
-
-    @Override
-    public ExtendedStoreConnectionType getType() {
-        return ExtendedStoreConnectionType.AMAZONS3;
-    }
-
-    public void cleanDatabase() {
-        LOGGER.warn("DELETE DATABASE");
-        for (BucketDirectory bucketDirectory : listAllBuckets()) {
-            deleteContainer(bucketDirectory);
-        }
+    public void deleteDatabase() {
+        removeBlobFolder(amazonS3RootBucket);
     }
 
     public void showDatabase() {
@@ -411,10 +338,6 @@ public class AmazonS3DFSConnection implements DFSConnection {
      */
     private void internalRemoveMultiple(BucketDirectory abucketDirectory) {
         LOGGER.debug("internalRemoveMultiple " + abucketDirectory);
-        if (!containerExists(abucketDirectory)) {
-            return;
-        }
-
         BucketDirectory bucketDirectory = amazonS3RootBucket.append(abucketDirectory);
 
         String container = bucketDirectory.getObjectHandle().getContainer();
@@ -450,10 +373,6 @@ public class AmazonS3DFSConnection implements DFSConnection {
             LOGGER.debug("DELETE CONTENTS OF BUCKET " + container + " with " + keys.size() + " elements");
             DeleteObjectsResult deleteObjectsResult = connection.deleteObjects(deleteObjectsRequest);
             LOGGER.debug("SERVER CONFIRMED DELETION OF " + deleteObjectsResult.getDeletedObjects().size() + " elements");
-        }
-        if (abucketDirectory.getObjectHandle().getName() == null) {
-            BucketPath containerFile = amazonS3RootContainersBucket.appendName(abucketDirectory.getObjectHandle().getContainer());
-            connection.deleteObject(containerFile.getObjectHandle().getContainer(), containerFile.getObjectHandle().getName());
         }
     }
 

@@ -34,8 +34,6 @@ public class BucketPath {
             if (!split.isEmpty()) {
                 name = split.stream().map(b -> b).collect(Collectors.joining(BucketName.BUCKET_SEPARATOR));
             }
-        } else {
-            throw new BucketException("container must not be null");
         }
     }
 
