@@ -1,12 +1,7 @@
 package de.adorsys.dfs.connection.api.domain;
 
-import de.adorsys.dfs.connection.api.complextypes.BucketPath;
-import de.adorsys.dfs.connection.api.complextypes.BucketPathUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import de.adorsys.dfs.connection.api.exceptions.BucketRestrictionException;
-
-import java.io.File;
 
 @ApiModel(value = "ObjectHandle", description = "Contains information necessary to storage or retrieval an object from the object storage.")
 public class ObjectHandle {
@@ -20,7 +15,7 @@ public class ObjectHandle {
     }
 
     public ObjectHandle(String container, String name) {
-        checkRestrictions(container);
+        //checkRestrictions(container);
         this.container = container;
         this.name = name;
     }
@@ -31,7 +26,7 @@ public class ObjectHandle {
     }
 
     public void setContainer(String container) {
-        checkRestrictions(container);
+        // checkRestrictions(container);
         this.container = container;
     }
 
@@ -61,6 +56,7 @@ public class ObjectHandle {
      * We recommend that you do not use periods (".") in bucket names.
      */
 
+    /*
     public static void checkRestrictions(String container) {
         if (container == null) {
             throw new BucketRestrictionException("Bucket must not be null");
@@ -75,4 +71,5 @@ public class ObjectHandle {
             throw new BucketRestrictionException("Bucket must not contain uppercase letters: " + container);
         }
     }
+     */
 }
