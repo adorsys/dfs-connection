@@ -62,6 +62,15 @@ public class DFSConnectionTest {
         s.deleteDatabase();
     }
 
+//    @Test
+//    public void DELETE_ALL_BUCKETS_OF_CONNECTION() {
+//        LOGGER.info("s is instance of " + s.getClass().getCanonicalName());
+//        if (s instanceof AmazonS3DFSConnection) {
+//            AmazonS3DFSConnection a = (AmazonS3DFSConnection) s;
+//            a.deleteAllBuckets();
+//        }
+//    }
+
     /*
     This test requrires manual access
      */

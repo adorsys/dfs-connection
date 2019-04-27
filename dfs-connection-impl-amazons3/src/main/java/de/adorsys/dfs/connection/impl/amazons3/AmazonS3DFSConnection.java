@@ -224,7 +224,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
     @Override
     public void deleteDatabase() {
-        removeBlobFolder(amazonS3RootBucket);
+        removeBlobFolder(new BucketDirectory(BucketPath.BUCKET_SEPARATOR));
     }
 
     public void showDatabase() {
@@ -238,6 +238,24 @@ public class AmazonS3DFSConnection implements DFSConnection {
             throw BaseExceptionHandler.handle(e);
         }
     }
+
+//    public void deleteAllBuckets() {
+//        try {
+//            List<Bucket> buckets = connection.listBuckets();
+//            for (Bucket bucket : buckets) {
+//                LOGGER.info(bucket.getName());
+//
+//                ObjectListing objectListing = connection.listObjects(bucket.getName());
+//                LOGGER.info("delete " + objectListing.getObjectSummaries().size() + " files from " + bucket.getName());
+//                objectListing.getObjectSummaries().forEach(sum -> {
+//                    connection.deleteObject(sum.getBucketName(), sum.getKey());
+//                });
+//                connection.deleteBucket(bucket.getName());
+//            }
+//        } catch (Exception e) {
+//            throw BaseExceptionHandler.handle(e);
+//        }
+//    }
 
 
     // ==========================================================================
