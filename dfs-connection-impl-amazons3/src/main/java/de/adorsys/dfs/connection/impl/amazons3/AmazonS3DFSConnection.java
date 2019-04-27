@@ -108,8 +108,8 @@ public class AmazonS3DFSConnection implements DFSConnection {
                 .enablePathStyleAccess()
                 .build();
 
-        if (!connection.doesBucketExistV2(amazonS3RootBucket.getObjectHandle().getContainer())) {
-            connection.createBucket(amazonS3RootBucket.getObjectHandle().getContainer());
+        if (!connection.doesBucketExistV2(amazonS3RootBucket.getContainer())) {
+            connection.createBucket(amazonS3RootBucket.getContainer());
         }
     }
 
@@ -148,7 +148,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
         LOGGER.debug("getBlobStream " + abucketPath);
         BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
 
-        GetObjectRequest getObjectRequest = new GetObjectRequest(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName());
+        GetObjectRequest getObjectRequest = new GetObjectRequest(bucketPath.getContainer(), bucketPath.getName());
         S3Object object = connection.getObject(getObjectRequest);
         S3ObjectInputStream objectContent = object.getObjectContent();
         PayloadStream payloadStream = new SimplePayloadStreamImpl(objectContent);
@@ -163,7 +163,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
         // actually using exceptions is not nice, but it seems to be much faster than any list command
         try {
-            connection.getObjectMetadata(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName());
+            connection.getObjectMetadata(bucketPath.getContainer(), bucketPath.getName());
             LOGGER.debug("blob exists " + abucketPath + " TRUE");
             return true;
         } catch (AmazonS3Exception e) {
@@ -182,7 +182,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
         LOGGER.debug("removeBlob " + abucketPath);
         BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
 
-        connection.deleteObject(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName());
+        connection.deleteObject(bucketPath.getContainer(), bucketPath.getName());
     }
 
     @Override
@@ -211,8 +211,8 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
         BucketDirectory bucketDirectory = amazonS3RootBucket.append(abucketDirectory);
 
-        String container = bucketDirectory.getObjectHandle().getContainer();
-        String prefix = bucketDirectory.getObjectHandle().getName();
+        String container = bucketDirectory.getContainer();
+        String prefix = bucketDirectory.getName();
         if (prefix == null) {
             prefix = BucketPath.BUCKET_SEPARATOR;
         } else {
@@ -235,7 +235,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
     public void showDatabase() {
         try {
-            ObjectListing ol = connection.listObjects(amazonS3RootBucket.getObjectHandle().getContainer());
+            ObjectListing ol = connection.listObjects(amazonS3RootBucket.getContainer());
             List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
             for (S3ObjectSummary key : ol.getObjectSummaries()) {
                 LOGGER.debug(key.getKey());
@@ -291,8 +291,8 @@ public class AmazonS3DFSConnection implements DFSConnection {
             BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
 
             PutObjectRequest putObjectRequest = new PutObjectRequest(
-                    bucketPath.getObjectHandle().getContainer(),
-                    bucketPath.getObjectHandle().getName(),
+                    bucketPath.getContainer(),
+                    bucketPath.getName(),
                     payloadStream.openStream(),
                     objectMetadata);
             PutObjectResult putObjectResult = connection.putObject(putObjectRequest);
@@ -320,7 +320,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
                 BucketPath bucketPath = amazonS3RootBucket.append(abucketPath);
 
-                PutObjectRequest putObjectRequest = new PutObjectRequest(bucketPath.getObjectHandle().getContainer(), bucketPath.getObjectHandle().getName(), fis, objectMetadata);
+                PutObjectRequest putObjectRequest = new PutObjectRequest(bucketPath.getContainer(), bucketPath.getName(), fis, objectMetadata);
                 PutObjectResult putObjectResult = connection.putObject(putObjectRequest);
                 LOGGER.debug("stored " + bucketPath + " to ceph with size " + targetFile.length());
             }
@@ -340,8 +340,8 @@ public class AmazonS3DFSConnection implements DFSConnection {
         LOGGER.debug("internalRemoveMultiple " + abucketDirectory);
         BucketDirectory bucketDirectory = amazonS3RootBucket.append(abucketDirectory);
 
-        String container = bucketDirectory.getObjectHandle().getContainer();
-        String prefix = bucketDirectory.getObjectHandle().getName();
+        String container = bucketDirectory.getContainer();
+        String prefix = bucketDirectory.getName();
         if (prefix == null) {
             prefix = "";
         }

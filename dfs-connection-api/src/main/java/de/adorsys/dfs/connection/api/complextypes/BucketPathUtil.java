@@ -1,6 +1,5 @@
 package de.adorsys.dfs.connection.api.complextypes;
 
-import de.adorsys.common.exceptions.BaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,29 +15,11 @@ public class BucketPathUtil {
     private final static Logger LOGGER = LoggerFactory.getLogger(BucketPathUtil.class);
 
     public static String getAsString(BucketDirectory bucketDirectory) {
-        String container = bucketDirectory.getObjectHandle().getContainer();
-        String name = bucketDirectory.getObjectHandle().getName();
-        if (name == null) {
-            name = "";
-        }
-
-        return container + BucketPath.BUCKET_SEPARATOR + name;
+        return bucketDirectory.getValue();
     }
 
     public static String getAsString(BucketPath bucketPath) {
-        String container = bucketPath.getObjectHandle().getContainer();
-        String name = bucketPath.getObjectHandle().getName();
-        if (name == null) {
-            name = "";
-        }
-
-        return container + BucketPath.BUCKET_SEPARATOR + name;
-    }
-
-    public static void checkContainerName(String name) {
-        if (name.indexOf(BucketPath.BUCKET_SEPARATOR) != -1) {
-            throw new BaseException(name + " is not a valid container name. Must not contain " + BucketPath.BUCKET_SEPARATOR);
-        }
+        return bucketPath.getValue();
     }
 
     /**
@@ -63,6 +44,4 @@ public class BucketPathUtil {
     private static boolean notOnlyWhitespace(String value) {
         return value.replaceAll(" ", "").length() > 0;
     }
-
-
 }
