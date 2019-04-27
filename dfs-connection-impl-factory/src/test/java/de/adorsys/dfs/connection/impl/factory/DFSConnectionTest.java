@@ -1,5 +1,6 @@
 package de.adorsys.dfs.connection.impl.factory;
 
+import de.adorsys.common.exceptions.BaseException;
 import de.adorsys.common.exceptions.BaseExceptionHandler;
 import de.adorsys.common.utils.HexUtil;
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
@@ -7,12 +8,16 @@ import de.adorsys.dfs.connection.api.complextypes.BucketPath;
 import de.adorsys.dfs.connection.api.domain.Payload;
 import de.adorsys.dfs.connection.api.domain.PayloadStream;
 import de.adorsys.dfs.connection.api.exceptions.StorageConnectionException;
+import de.adorsys.dfs.connection.api.filesystem.FilesystemConnectionPropertiesImpl;
 import de.adorsys.dfs.connection.api.service.api.DFSConnection;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadImpl;
 import de.adorsys.dfs.connection.api.service.impl.SimplePayloadStreamImpl;
 import de.adorsys.dfs.connection.api.types.ListRecursiveFlag;
+import de.adorsys.dfs.connection.api.types.connection.AmazonS3RootBucketName;
+import de.adorsys.dfs.connection.api.types.connection.FilesystemRootBucketName;
+import de.adorsys.dfs.connection.api.types.properties.ConnectionProperties;
+import de.adorsys.dfs.connection.impl.amazons3.AmazonS3ConnectionProperitesImpl;
 import de.adorsys.dfs.connection.impl.amazons3.AmazonS3DFSConnection;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -30,9 +35,9 @@ import java.util.List;
 /**
  * Created by peter on 06.02.18 at 16:45.
  */
-@Slf4j
 public class DFSConnectionTest {
     private final static Logger LOGGER = LoggerFactory.getLogger(DFSConnectionTest.class);
+
     private List<BucketDirectory> containers = new ArrayList<>();
     private DFSConnection s = DFSConnectionFactory.get();
 
@@ -112,21 +117,21 @@ public class DFSConnectionTest {
 
         {
             List<BucketPath> files = s.list(bd, ListRecursiveFlag.TRUE);
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
             Assert.assertEquals(1, files.size());
             Assert.assertTrue(s.blobExists(file));
         }
 
         {
             List<BucketPath> files = s.list(bd.appendDirectory("empty1"), ListRecursiveFlag.TRUE);
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
             Assert.assertEquals(1, files.size());
             Assert.assertTrue(s.blobExists(file));
         }
 
         {
             List<BucketPath> files = s.list(bd.appendDirectory("empty1/empty2"), ListRecursiveFlag.TRUE);
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
             Assert.assertEquals(1, files.size());
             Assert.assertTrue(s.blobExists(file));
         }
@@ -145,19 +150,19 @@ public class DFSConnectionTest {
 
         {
             List<BucketPath> files = s.list(bd, ListRecursiveFlag.FALSE);
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
             Assert.assertEquals(0, files.size());
             Assert.assertTrue(s.blobExists(file));
         }
         {
             List<BucketPath> files = s.list(bd.appendDirectory("empty1"), ListRecursiveFlag.FALSE);
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
             Assert.assertEquals(0, files.size());
             Assert.assertTrue(s.blobExists(file));
         }
         {
             List<BucketPath> files = s.list(bd.appendDirectory("empty1/empty2"), ListRecursiveFlag.FALSE);
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
 
             Assert.assertEquals(1, files.size());
             Assert.assertTrue(s.blobExists(file));
@@ -184,7 +189,7 @@ public class DFSConnectionTest {
         containers.add(bd);
 
         List<BucketPath> files = s.list(bd, ListRecursiveFlag.FALSE);
-        LOGGER.debug(showBucketPath(files));
+        showBucketPath("list", files);
         Assert.assertEquals(0, files.size());
     }
 
@@ -217,7 +222,7 @@ public class DFSConnectionTest {
             s.putBlob(file, new SimplePayloadImpl(filecontent));
 
             List<BucketPath> files = s.list(bd, ListRecursiveFlag.FALSE);
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
 
             Assert.assertEquals(1, files.size());
             Assert.assertTrue(s.blobExists(file));
@@ -238,7 +243,7 @@ public class DFSConnectionTest {
         BucketDirectory bd = new BucketDirectory("affe4");
 
         List<BucketPath> files = s.list(bd, ListRecursiveFlag.FALSE);
-        LOGGER.debug(showBucketPath(files));
+        showBucketPath("list", files);
 
         Assert.assertEquals(0, files.size());
     }
@@ -263,8 +268,8 @@ public class DFSConnectionTest {
 
 
     /**
-     * bei recursiver Suche muss alles gefunden werden, bei nicht rekursiver nur das
-     * aktuelle Verzeichnis
+     * recursive search finds all files
+     * non recursive search finds files of current directory
      */
     @Test
     public void testList6() {
@@ -277,14 +282,14 @@ public class DFSConnectionTest {
         s.putBlob(bd.append(new BucketPath("subdir1/filec")), new SimplePayloadImpl("Inhalt".getBytes()));
         s.putBlob(bd.append(new BucketPath("subdir1/filed")), new SimplePayloadImpl("Inhalt".getBytes()));
         List<BucketPath> files = s.list(bd, ListRecursiveFlag.TRUE);
-        LOGGER.debug("recursive " + showBucketPath(files));
+        showBucketPath("recursive", files);
         {
             Assert.assertEquals(4, files.size());
         }
 
 
         files = s.list(bd, ListRecursiveFlag.FALSE);
-        LOGGER.debug("plain " + showBucketPath(files));
+        showBucketPath("plain", files);
         {
             Assert.assertEquals(2, files.size());
         }
@@ -301,12 +306,12 @@ public class DFSConnectionTest {
 
         s.putBlob(bd.append(new BucketPath("subdir1/filea")), new SimplePayloadImpl("Inhalt".getBytes()));
         List<BucketPath> files = s.list(bd, ListRecursiveFlag.TRUE);
-        LOGGER.debug(showBucketPath(files));
+        showBucketPath("list", files);
         Assert.assertTrue(files.contains(new BucketPath("affe7/1/2/3/subdir1/filea")));
         Assert.assertEquals(1, files.size());
 
         files = s.list(bd, ListRecursiveFlag.FALSE);
-        LOGGER.debug(showBucketPath(files));
+        showBucketPath("list", files);
         Assert.assertEquals(0, files.size());
     }
 
@@ -328,7 +333,7 @@ public class DFSConnectionTest {
         /**
          * Anlegen einer tieferen Verzeichnisstruktur
          */
-        createFilesAndFoldersRecursivly(bd, 2, 2, 5, s);
+        createFiles(s, bd, 2, 2, 5);
 
         if (s instanceof AmazonS3DFSConnection) {
             ((AmazonS3DFSConnection) s).showDatabase();
@@ -354,7 +359,7 @@ public class DFSConnectionTest {
     }
 
     /**
-     * Anlegen einer tieferen Verzeichnisstruktur
+     * create a deeper structure
      */
     @Test
     public void testList8() {
@@ -364,20 +369,22 @@ public class DFSConnectionTest {
         s.createContainer(bd);
         containers.add(bd);
 
-        createFiles(s, bd, 3, 2);
+        List<BucketPath> list = createFiles(s, bd, 3, 2, 3);
         {
             LOGGER.debug("test8 start subtest 1");
             List<BucketPath> files = s.list(bd, ListRecursiveFlag.FALSE);
             LOGGER.debug("1 einfaches listing");
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
             Assert.assertEquals(2, files.size());
+            compare(list,files);
         }
         {
             LOGGER.debug("test8 start subtest 2");
             List<BucketPath> files = s.list(bd, ListRecursiveFlag.TRUE);
             LOGGER.debug("2 recursives listing");
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
             Assert.assertEquals(26, files.size());
+            compare(list,files);
         }
 
         {
@@ -385,8 +392,9 @@ public class DFSConnectionTest {
             BucketDirectory bp = bd.appendDirectory("subdir1");
             List<BucketPath> files = s.list(bp, ListRecursiveFlag.FALSE);
             LOGGER.debug("3 einfaches listing");
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
             Assert.assertEquals(2, files.size());
+            compare(list,files);
         }
 
         {
@@ -394,8 +402,9 @@ public class DFSConnectionTest {
             BucketDirectory bp = bd.appendDirectory("subdir1");
             List<BucketPath> files = s.list(bp, ListRecursiveFlag.TRUE);
             LOGGER.debug("4 recursives listing");
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
             Assert.assertEquals(8, files.size());
+            compare(list,files);
         }
 
         {
@@ -404,15 +413,17 @@ public class DFSConnectionTest {
             s.removeBlobFolder(subdirectory1);
             List<BucketPath> files = s.list(bd, ListRecursiveFlag.TRUE);
             LOGGER.debug("5 recursives listing");
-            LOGGER.debug(showBucketPath(files));
+            showBucketPath("list", files);
             Assert.assertEquals(18, files.size());
+            compare(list,files);
         }
         {
             LOGGER.debug("test8 start subtest 6");
-            s.list(bd, ListRecursiveFlag.TRUE).forEach(el -> LOGGER.debug("found. " + el.toString()));
+            List<BucketPath> files = s.list(bd, ListRecursiveFlag.TRUE);
             Assert.assertFalse(s.blobExists(bd.appendDirectory("subdir1").appendName("file1")));
             Assert.assertTrue(s.blobExists(bd.appendDirectory("subdir2").appendName("file1")));
             Assert.assertFalse(s.blobExists(bd.appendDirectory("subdir2").appendName("file9")));
+            compare(list,files);
         }
 
         {
@@ -428,6 +439,31 @@ public class DFSConnectionTest {
         }
 
     }
+
+    private void compare(List<BucketPath> list, List<BucketPath> files) {
+        showBucketPath("full list", list);
+        showBucketPath("found files", files);
+        Assert.assertTrue(list.containsAll(files));
+    }
+
+    /**
+     * same as testList6, but with different root directories for the service
+     */
+    @Test
+    public void testList8a() {
+        ConnectionProperties props = s.getConnectionProperties();
+        props = changeRootDirectory(props, "deeper");
+        s = DFSConnectionFactory.get(props);
+        testList8();
+    }
+    @Test
+    public void testList8b() {
+        ConnectionProperties props = s.getConnectionProperties();
+        props = changeRootDirectory(props, "deeper/and/deeper");
+        s = DFSConnectionFactory.get(props);
+        testList8();
+    }
+
 
     /**
      * Überschreiben einer Datei
@@ -501,7 +537,7 @@ public class DFSConnectionTest {
         LOGGER.debug("bucketPath " + bucketPath);
         LOGGER.debug("pathAsDir  " + bd);
         List<BucketPath> files = s.list(bd, ListRecursiveFlag.TRUE);
-        LOGGER.debug(showBucketPath(files));
+        showBucketPath("list", files);
         Assert.assertTrue(files.isEmpty());
     }
 
@@ -551,36 +587,57 @@ public class DFSConnectionTest {
     }
     /* =========================================================================================================== */
 
-    private void createFiles(DFSConnection DFSConnection, BucketDirectory rootDirectory,
-                             int subdirs, int subfiles) {
-        createFilesAndFoldersRecursivly(rootDirectory, subdirs, subfiles, 3, DFSConnection);
+    private List<BucketPath> createFiles(DFSConnection DFSConnection, BucketDirectory rootDirectory, int subdirs, int subfiles, int depth) {
+        List<BucketPath> list = new ArrayList<>();
+        createFilesAndFoldersRecursivly(rootDirectory, subdirs, subfiles, depth, DFSConnection, list);
+        return list;
     }
 
     private void createFilesAndFoldersRecursivly(BucketDirectory rootDirectory, int subdirs, int subfiles,
-                                                 int depth, DFSConnection DFSConnection) {
+                                                 int depth, DFSConnection DFSConnection, List<BucketPath> list) {
         if (depth == 0) {
             return;
         }
 
         for (int i = 0; i < subfiles; i++) {
             byte[] content = ("Affe of file " + i + "").getBytes();
-            DFSConnection.putBlob(rootDirectory.appendName("file" + i), new SimplePayloadImpl(content));
+            BucketPath bucketPath = rootDirectory.appendName("file" + i);
+            DFSConnection.putBlob(bucketPath, new SimplePayloadImpl(content));
+            list.add(bucketPath);
+
         }
         for (int i = 0; i < subdirs; i++) {
-            createFilesAndFoldersRecursivly(rootDirectory.appendDirectory("subdir" + i), subdirs, subfiles, depth - 1, DFSConnection);
+            createFilesAndFoldersRecursivly(rootDirectory.appendDirectory("subdir" + i), subdirs, subfiles, depth - 1, DFSConnection, list);
         }
     }
 
-    private String showBucketPath(List<BucketPath> list) {
+    private void showBucketPath(String message, List<BucketPath> list) {
+        LOGGER.debug(message);
         StringBuilder sb = new StringBuilder();
-        sb.append("List of BucketPath");
-        sb.append("\n");
         for (BucketPath m : list) {
-            sb.append(m.toString());
-            sb.append(", ");
-            sb.append("\n");
+            LOGGER.debug(m.toString());
         }
-        return sb.toString();
     }
+
+    private ConnectionProperties changeRootDirectory(ConnectionProperties props, String deeper) {
+        if (props instanceof FilesystemConnectionPropertiesImpl) {
+            FilesystemConnectionPropertiesImpl p = (FilesystemConnectionPropertiesImpl) props;
+            String root = p.getFilesystemRootBucketName().getValue();
+            root = root + BucketPath.BUCKET_SEPARATOR + deeper;
+            p.setFilesystemRootBucketName(new FilesystemRootBucketName(root));
+            return p;
+        }
+
+        if (props instanceof AmazonS3ConnectionProperitesImpl) {
+            AmazonS3ConnectionProperitesImpl p = (AmazonS3ConnectionProperitesImpl) props;
+            String root = p.getAmazonS3RootBucketName().getValue();
+            root = root + BucketPath.BUCKET_SEPARATOR + deeper;
+            p.setAmazonS3RootBucketName(new AmazonS3RootBucketName(root));
+            return p;
+
+        }
+        throw new BaseException("unknown instance of properties:" + props);
+    }
+
 
 }

@@ -52,12 +52,9 @@ import java.util.Set;
 public class AmazonS3DFSConnection implements DFSConnection {
     private AmazonS3ConnectionProperitesImpl connectionProperties;
     private final static Logger LOGGER = LoggerFactory.getLogger(AmazonS3DFSConnection.class);
-    private static final Logger SPECIAL_LOGGER = LoggerFactory.getLogger("SPECIAL_LOGGER");
     private AmazonS3 connection = null;
     private final static String AMAZONS3_TMP_FILE_PREFIX = "AMAZONS3_TMP_FILE_";
     private final static String AMAZONS3_TMP_FILE_SUFFIX = "";
-    private static final String STORAGE_METADATA_KEY = "StorageMetadata";
-    private final static int AMAZON_S3_META_LIMIT = 1024 * 2;
     private BucketDirectory amazonS3RootBucket;
     private BucketDirectory amazonS3RootContainersBucket;
     private AmazonS3Region amazonS3Region;
@@ -266,7 +263,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
         if (blobExists(new BucketPath(BucketPathUtil.getAsString(abucketDirectory)))) {
             // diese If-Abfrage dient dem Spezialfall, dass jemand einen BucketPath als BucketDirectory uebergeben hat.
             // Dann gibt es diesen bereits als file, dann muss eine leere Liste zurücgeben werden
-            return new ArrayList<>();
+            return returnList;
         }
 
         BucketDirectory bucketDirectory = amazonS3RootBucket.append(abucketDirectory);
@@ -284,7 +281,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
         ObjectListing ol = connection.listObjects(container, searchKey);
         final List<String> keys = new ArrayList<>();
         ol.getObjectSummaries().forEach(el -> keys.add(BucketPath.BUCKET_SEPARATOR + el.getKey()));
-        returnList = filter(container, prefix, keys, listRecursiveFlag);
+        returnList = filter(amazonS3RootBucket, abucketDirectory, prefix, keys, listRecursiveFlag);
         return returnList;
     }
 
@@ -324,57 +321,36 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
     // ==========================================================================
 
-    List<BucketPath> filter(String container, String prefix, final List<String> keys, ListRecursiveFlag recursive) {
+    List<BucketPath> filter(BucketDirectory rootBucketName, BucketDirectory searchDirectory, String prefix, final List<String> keys, ListRecursiveFlag recursive) {
+        String rootDirectoryString = BucketPathUtil.getAsString(rootBucketName);
+        String searchDirectoryString = BucketPathUtil.getAsString(searchDirectory);
+        LOGGER.debug("recursive is " + recursive);
+        LOGGER.debug("prefix    is " + prefix);
+        LOGGER.debug("rootdir   is " + rootDirectoryString);
+        LOGGER.debug("searchdir is " + searchDirectoryString);
+        showKeys("keys before filter", keys);
         List<BucketPath> result = new ArrayList<>();
-        Set<String> dirs = new HashSet<>();
 
         // showKeys(keys);
         int numberOfDelimitersOfPrefix = StringUtils.countMatches(prefix, BucketPath.BUCKET_SEPARATOR);
-        if (prefix.length() > BucketPath.BUCKET_SEPARATOR.length()) {
+        if (searchDirectoryString.length() > BucketPath.BUCKET_SEPARATOR.length()) {
             numberOfDelimitersOfPrefix++;
         }
         int numberOfDelimitersExpected = numberOfDelimitersOfPrefix;
 
         keys.forEach(key -> {
             if (recursive.equals(ListRecursiveFlag.TRUE)) {
-                result.add(new BucketPath(key));
+                String keyWithoutPrefix = key.substring(prefix.length());
+                result.add(searchDirectory.appendName(keyWithoutPrefix));
             } else {
                 int numberOfDelimitersOfKey = StringUtils.countMatches(key, BucketPath.BUCKET_SEPARATOR);
                 if (numberOfDelimitersOfKey == numberOfDelimitersExpected) {
-                    result.add(new BucketPath(key));
+                    String keyWithoutPrefix = key.substring(prefix.length());
+                    result.add(searchDirectory.appendName(keyWithoutPrefix));
                 }
             }
-
-            if (recursive.equals(ListRecursiveFlag.TRUE)) {
-                int fromIndex = prefix.length();
-                while (fromIndex != -1) {
-                    fromIndex = key.indexOf(BucketPath.BUCKET_SEPARATOR, fromIndex + 1);
-                    if (fromIndex != -1) {
-                        String dir = key.substring(0, fromIndex);
-                        if (dir.length() == 0) {
-                            dir = BucketPath.BUCKET_SEPARATOR;
-                        }
-                        dirs.add(dir);
-                    }
-                }
-            } else {
-                int fromIndex = prefix.length();
-                int counter = 0;
-                while (fromIndex != -1 && counter < 1) {
-                    fromIndex = key.indexOf(BucketPath.BUCKET_SEPARATOR, fromIndex + 1);
-                    if (fromIndex != -1) {
-                        counter++;
-                        String dir = key.substring(0, fromIndex);
-                        if (dir.length() == 0) {
-                            dir = BucketPath.BUCKET_SEPARATOR;
-                        }
-                        dirs.add(dir);
-                    }
-                }
-            }
-
         });
-        showResult(result);
+        showResult("after filter", result);
         return result;
     }
 
@@ -481,15 +457,15 @@ public class AmazonS3DFSConnection implements DFSConnection {
         }
     }
 
-    private void showResult(List<BucketPath> result) {
-        LOGGER.debug("nachher:");
+    private void showResult(String message, List<BucketPath> result) {
+        LOGGER.debug(message);
         result.forEach(el -> {
             LOGGER.debug(el.toString());
         });
     }
 
-    private void showKeys(List<String> keys) {
-        LOGGER.debug("vorher");
+    private void showKeys(String message, List<String> keys) {
+        LOGGER.debug(message);
         keys.forEach(el -> {
             LOGGER.debug(el);
         });
