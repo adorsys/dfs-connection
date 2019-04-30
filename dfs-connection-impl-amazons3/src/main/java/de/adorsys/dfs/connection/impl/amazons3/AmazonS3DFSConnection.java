@@ -358,34 +358,41 @@ public class AmazonS3DFSConnection implements DFSConnection {
             prefix = "";
         }
         LOGGER.debug("listObjects(" + container + "," + prefix + ")");
-        ObjectListing ol = connection.listObjects(container, prefix);
-        if (ol.getObjectSummaries().isEmpty()) {
-            LOGGER.debug("no files found in " + container + " with prefix " + prefix);
-        }
 
-        List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
-        for (S3ObjectSummary key : ol.getObjectSummaries()) {
-            keys.add(new DeleteObjectsRequest.KeyVersion(key.getKey()));
-            if (keys.size() == 100) {
-                DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(container);
-                deleteObjectsRequest.setKeys(keys);
-                LOGGER.debug("DELETE CHUNK CONTENTS OF BUCKET " + container + " with " + keys.size() + " elements");
-                DeleteObjectsResult deleteObjectsResult = connection.deleteObjects(deleteObjectsRequest);
-                LOGGER.debug("SERVER CONFIRMED DELETION OF " + deleteObjectsResult.getDeletedObjects().size() + " elements");
-                ObjectListing ol2 = connection.listObjects(container);
-                LOGGER.debug("SERVER has remaining " + ol2.getObjectSummaries().size() + " elements");
-                if (ol2.getObjectSummaries().size() == ol.getObjectSummaries().size()) {
-                    throw new BaseException("Fatal error. Server confirmied deleltion of " + keys.size() + " elements, but still " + ol.getObjectSummaries().size() + " elementents in " + container);
+        int totalCount = 0;
+        ObjectListing ol = connection.listObjects(container, prefix);
+        LOGGER.debug(bucketDirectory + " contains " + ol.getObjectSummaries().size() + " elements that should be deleted");
+        while (!ol.getObjectSummaries().isEmpty()) {
+
+            int CHUNKSIZE = 100;
+            List<DeleteObjectsRequest.KeyVersion> keys = new ArrayList<>();
+            for (S3ObjectSummary key : ol.getObjectSummaries()) {
+                keys.add(new DeleteObjectsRequest.KeyVersion(key.getKey()));
+                if (keys.size() == CHUNKSIZE) {
+                    DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(container);
+                    deleteObjectsRequest.setKeys(keys);
+                    LOGGER.debug(bucketDirectory + " chunk with " + keys.size() + " elements will be deleted");
+                    DeleteObjectsResult deleteObjectsResult = connection.deleteObjects(deleteObjectsRequest);
+                    LOGGER.debug(bucketDirectory + " deletion of chunk with " + deleteObjectsResult.getDeletedObjects().size() + " elements confirmed");
+                    totalCount += keys.size();
+                    keys.clear();
                 }
             }
+            if (!keys.isEmpty()) {
+                DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(container);
+                deleteObjectsRequest.setKeys(keys);
+                LOGGER.debug(bucketDirectory + " chunk with " + keys.size() + " elements will be deleted");
+                DeleteObjectsResult deleteObjectsResult = connection.deleteObjects(deleteObjectsRequest);
+                totalCount += keys.size();
+                LOGGER.debug(bucketDirectory + " deletion of chunk with " + deleteObjectsResult.getDeletedObjects().size() + " elements confirmed");
+            }
+
+            ol = connection.listObjects(container);
+            if (!ol.getObjectSummaries().isEmpty()) {
+                LOGGER.debug(bucketDirectory + " still contains " + ol.getObjectSummaries().size() + " elements that should be deleted. repeat deletion");
+            }
         }
-        if (!keys.isEmpty()) {
-            DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(container);
-            deleteObjectsRequest.setKeys(keys);
-            LOGGER.debug("DELETE CONTENTS OF BUCKET " + container + " with " + keys.size() + " elements");
-            DeleteObjectsResult deleteObjectsResult = connection.deleteObjects(deleteObjectsRequest);
-            LOGGER.debug("SERVER CONFIRMED DELETION OF " + deleteObjectsResult.getDeletedObjects().size() + " elements");
-        }
+        LOGGER.info(bucketDirectory + " total elements deleted:" + totalCount);
     }
 
     private void showResult(String message, List<BucketPath> result) {
