@@ -38,7 +38,7 @@ public class DFSConnectionTest {
     private final static Logger LOGGER = LoggerFactory.getLogger(DFSConnectionTest.class);
 
     private List<BucketDirectory> containers = new ArrayList<>();
-    private DFSConnection s = DFSConnectionFactory.get();
+    private DFSConnection s = new DFSConnectionFactory().get();
 
     @Before
     public void before() {
@@ -437,14 +437,14 @@ public class DFSConnectionTest {
     public void testList8a() {
         ConnectionProperties props = s.getConnectionProperties();
         props = changeRootDirectory(props, "deeper");
-        s = DFSConnectionFactory.get(props);
+        s = new DFSConnectionFactory().get(props);
         testList8();
     }
     @Test
     public void testList8b() {
         ConnectionProperties props = s.getConnectionProperties();
         props = changeRootDirectory(props, "deeper/and/deeper");
-        s = DFSConnectionFactory.get(props);
+        s = new DFSConnectionFactory().get(props);
         testList8();
     }
 

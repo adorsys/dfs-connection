@@ -15,7 +15,7 @@ public class Main {
         BucketPath bucketPath = new BucketPath("/a/path/to/a/file.txt");
 
         System.out.println("the tricky part, get a connection. Default is a filesystem connection starting in ./target/filesystemstorage");
-        DFSConnection dfsConnection = DFSConnectionFactory.get();
+        DFSConnection dfsConnection = new DFSConnectionFactory().get();
 
         System.out.println("check if document exists");
         if (dfsConnection.blobExists(bucketPath)) {
