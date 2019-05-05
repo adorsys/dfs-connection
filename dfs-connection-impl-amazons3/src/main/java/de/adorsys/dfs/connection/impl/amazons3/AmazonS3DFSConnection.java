@@ -387,7 +387,7 @@ public class AmazonS3DFSConnection implements DFSConnection {
                 LOGGER.debug(bucketDirectory + " deletion of chunk with " + deleteObjectsResult.getDeletedObjects().size() + " elements confirmed");
             }
 
-            ol = connection.listObjects(container);
+            ol = connection.listObjects(container, prefix);
             if (!ol.getObjectSummaries().isEmpty()) {
                 LOGGER.debug(bucketDirectory + " still contains " + ol.getObjectSummaries().size() + " elements that should be deleted. repeat deletion");
             }
