@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.adorsys</groupId>
 	<artifactId>dfs-connection</artifactId>
-	<version>0.99.1-SNAPSHOT</version>
+	<version>0.99.2-SNAPSHOT</version>
     <name>dfs-connection</name>
     <url>https://github.com/adorsys/dfs-connection</url>
     <packaging>pom</packaging>
