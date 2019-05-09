@@ -1,5 +1,6 @@
 package de.adorsys.dfs.connection.api.filesystem;
 
+import de.adorsys.common.exceptions.BaseException;
 import de.adorsys.common.exceptions.BaseExceptionHandler;
 import de.adorsys.common.utils.Frame;
 import de.adorsys.dfs.connection.api.complextypes.BucketDirectory;
@@ -100,7 +101,7 @@ public class FileSystemDFSConnection implements DFSConnection {
 
     @Override
     public void deleteDatabase() {
-        removeBlobFolder(baseDir);
+        removeBlobFolder(new BucketDirectory("/"));
     }
 
     @Override
@@ -152,6 +153,9 @@ public class FileSystemDFSConnection implements DFSConnection {
         LOGGER.debug("removeBlobFolder " + bucketDirectory);
         File directory = BucketPathFileHelper.getAsFile(baseDir.append(bucketDirectory), absolutePath);
         LOGGER.debug("remove directory " + directory.getAbsolutePath());
+        if (directory.getAbsolutePath().length() < 3) {
+            throw new BaseException("just to make sure, root will never every be to be deleted");
+        }
         if (!directory.exists()) {
             return;
         }
