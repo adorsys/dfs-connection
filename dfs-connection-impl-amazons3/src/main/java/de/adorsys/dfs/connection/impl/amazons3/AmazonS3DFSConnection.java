@@ -251,13 +251,19 @@ public class AmazonS3DFSConnection implements DFSConnection {
 //            List<Bucket> buckets = connection.listBuckets();
 //            for (Bucket bucket : buckets) {
 //                LOGGER.info(bucket.getName());
+//                //if (!bucket.getName().contains("travis")) {
 //
-//                ObjectListing objectListing = connection.listObjects(bucket.getName());
-//                LOGGER.info("delete " + objectListing.getObjectSummaries().size() + " files from " + bucket.getName());
-//                objectListing.getObjectSummaries().forEach(sum -> {
-//                    connection.deleteObject(sum.getBucketName(), sum.getKey());
-//                });
-//                connection.deleteBucket(bucket.getName());
+//                    ObjectListing objectListing = connection.listObjects(bucket.getName());
+//                    while(!objectListing.getObjectSummaries().isEmpty()) {
+//                        LOGGER.info("delete " + objectListing.getObjectSummaries().size() + " files from " + bucket.getName());
+//                        objectListing.getObjectSummaries().forEach(sum -> {
+//                            connection.deleteObject(sum.getBucketName(), sum.getKey());
+//                        });
+//                        objectListing = connection.listObjects(bucket.getName());
+//                    }
+//                    connection.deleteBucket(bucket.getName());
+//
+//                //}
 //            }
 //        } catch (Exception e) {
 //            throw BaseExceptionHandler.handle(e);
