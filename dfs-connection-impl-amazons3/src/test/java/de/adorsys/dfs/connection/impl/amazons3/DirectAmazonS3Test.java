@@ -35,8 +35,8 @@ import java.util.*;
  */
 public class DirectAmazonS3Test {
     private final static Logger LOGGER = LoggerFactory.getLogger(DirectAmazonS3Test.class);
-    private AmazonS3AccessKey accessKey = new AmazonS3AccessKey("AKIAJG3VIHWESAHJS6OQ");
-    private AmazonS3SecretKey secretKey = new AmazonS3SecretKey("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");
+    private AmazonS3AccessKey accessKey = new AmazonS3AccessKey("*");
+    private AmazonS3SecretKey secretKey = new AmazonS3SecretKey("*");
     private String urlString = "https://s3.amazonaws.com";
     private String rootbucket = "adorsys-docusafe";
     private String region = "eu-central-1";
