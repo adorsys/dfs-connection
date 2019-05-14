@@ -45,6 +45,7 @@ import java.util.List;
  * Created by peter on 17.09.18.
  */
 public class AmazonS3DFSConnection implements DFSConnection {
+    private static final String AMAZON_URL = "https://s3.amazonaws.com";
     private AmazonS3ConnectionProperitesImpl connectionProperties;
     private final static Logger LOGGER = LoggerFactory.getLogger(AmazonS3DFSConnection.class);
     private AmazonS3 connection = null;
@@ -71,10 +72,12 @@ public class AmazonS3DFSConnection implements DFSConnection {
 
         amazonS3Region = anAmazonS3Region;
         amazonS3RootBucket = new BucketDirectory(anAmazonS3RootBucketName.getValue());
+        boolean useEndpoint = (!url.toString().equals(AMAZON_URL));
         Frame frame = new Frame();
         frame.add("USE AMAZON S3 COMPLIANT SYSTEM");
         frame.add("(has be up and running)");
         frame.add("url:              " + url.toString());
+        frame.add("useEndpoint:      " + useEndpoint);
         frame.add("accessKey:        " + accessKey);
         frame.add("secretKey:        " + secretKey);
         frame.add("region:           " + amazonS3Region);
@@ -93,19 +96,23 @@ public class AmazonS3DFSConnection implements DFSConnection {
             }
         };
 
-        AwsClientBuilder.EndpointConfiguration endpoint = new AwsClientBuilder.EndpointConfiguration(url.toString(), amazonS3Region.getValue());
-
         ClientConfiguration clientConfig = new ClientConfiguration();
-        // clientConfig.setSocketTimeout(10000);
         clientConfig.setProtocol(Protocol.HTTP);
         clientConfig.disableSocketProxy();
-        connection = AmazonS3ClientBuilder.standard()
+        AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard()
                 .withCredentials(credentialsProvider)
-                .withEndpointConfiguration(endpoint)
                 .withClientConfiguration(clientConfig)
                 .withPayloadSigningEnabled(false)
-                .enablePathStyleAccess()
-                .build();
+                .enablePathStyleAccess();
+
+        if (useEndpoint) {
+            AwsClientBuilder.EndpointConfiguration endpoint = new AwsClientBuilder.EndpointConfiguration(url.toString(), amazonS3Region.getValue());
+            builder.withEndpointConfiguration(endpoint);
+        } else {
+            builder.withRegion(amazonS3Region.getValue());
+        }
+
+        connection = builder.build();
 
         if (!connection.doesBucketExistV2(amazonS3RootBucket.getContainer())) {
             connection.createBucket(amazonS3RootBucket.getContainer());
@@ -244,13 +251,19 @@ public class AmazonS3DFSConnection implements DFSConnection {
 //            List<Bucket> buckets = connection.listBuckets();
 //            for (Bucket bucket : buckets) {
 //                LOGGER.info(bucket.getName());
+//                //if (!bucket.getName().contains("travis")) {
 //
-//                ObjectListing objectListing = connection.listObjects(bucket.getName());
-//                LOGGER.info("delete " + objectListing.getObjectSummaries().size() + " files from " + bucket.getName());
-//                objectListing.getObjectSummaries().forEach(sum -> {
-//                    connection.deleteObject(sum.getBucketName(), sum.getKey());
-//                });
-//                connection.deleteBucket(bucket.getName());
+//                    ObjectListing objectListing = connection.listObjects(bucket.getName());
+//                    while(!objectListing.getObjectSummaries().isEmpty()) {
+//                        LOGGER.info("delete " + objectListing.getObjectSummaries().size() + " files from " + bucket.getName());
+//                        objectListing.getObjectSummaries().forEach(sum -> {
+//                            connection.deleteObject(sum.getBucketName(), sum.getKey());
+//                        });
+//                        objectListing = connection.listObjects(bucket.getName());
+//                    }
+//                    connection.deleteBucket(bucket.getName());
+//
+//                //}
 //            }
 //        } catch (Exception e) {
 //            throw BaseExceptionHandler.handle(e);

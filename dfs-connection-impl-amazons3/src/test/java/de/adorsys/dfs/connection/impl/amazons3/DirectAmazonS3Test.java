@@ -16,6 +16,7 @@ import de.adorsys.dfs.connection.api.types.connection.AmazonS3AccessKey;
 import de.adorsys.dfs.connection.api.types.connection.AmazonS3SecretKey;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +35,11 @@ import java.util.*;
  */
 public class DirectAmazonS3Test {
     private final static Logger LOGGER = LoggerFactory.getLogger(DirectAmazonS3Test.class);
-    private AmazonS3AccessKey accessKey = new AmazonS3AccessKey("V8AC3QWHH8EEANV7UBPD");
-    private AmazonS3SecretKey secretKey = new AmazonS3SecretKey("mDFxMKg1uFzQLtW4wNOH7RSPjTg9OE3uBFbA5hi0");
-    private String urlString = "http://192.168.178.60:8000";
+    private AmazonS3AccessKey accessKey = new AmazonS3AccessKey("*");
+    private AmazonS3SecretKey secretKey = new AmazonS3SecretKey("*");
+    private String urlString = "https://s3.amazonaws.com";
+    private String rootbucket = "adorsys-docusafe";
+    private String region = "eu-central-1";
     private String DELIMITER = "/";
 
     private static URL getUrl(String url) {
@@ -50,7 +53,7 @@ public class DirectAmazonS3Test {
     // @Test
     public void justASnipletTest() {
         try {
-            String AFFE = "affe3";
+            String AFFE = rootbucket;
             AWSCredentialsProvider credentialsProvider = new AWSCredentialsProvider() {
                 @Override
                 public AWSCredentials getCredentials() {
@@ -65,7 +68,7 @@ public class DirectAmazonS3Test {
             ClientConfiguration configuration = new ClientConfiguration();
             configuration.setProtocol(Protocol.HTTP);
 
-            AwsClientBuilder.EndpointConfiguration endpoint = new AwsClientBuilder.EndpointConfiguration(urlString, "US");
+            // AwsClientBuilder.EndpointConfiguration endpoint = new AwsClientBuilder.EndpointConfiguration(urlString, region);
 
             ClientConfiguration clientConfig = new ClientConfiguration();
             clientConfig.setSocketTimeout(500);
@@ -73,23 +76,27 @@ public class DirectAmazonS3Test {
             clientConfig.disableSocketProxy();
             AmazonS3 conn = AmazonS3ClientBuilder.standard()
                     .withCredentials(credentialsProvider)
-                    .withEndpointConfiguration(endpoint)
+               //     .withEndpointConfiguration(endpoint)
+                    .withRegion(region)
                     .withClientConfiguration(clientConfig)
                     .withPayloadSigningEnabled(false)
                     .enablePathStyleAccess()
                     .build();
-            List<Bucket> buckets = conn.listBuckets();
-            buckets.forEach(bucket -> {
-                LOGGER.debug("found bucket:" + bucket);
-                ObjectListing objectListing = conn.listObjects(new ListObjectsRequest().withBucketName(bucket.getName()));
-                objectListing.getObjectSummaries().forEach(sum -> {
-                    LOGGER.debug("found " + sum.getKey() + " in " + sum.getBucketName());
-                    VersionListing versionListing = conn.listVersions(sum.getBucketName(), sum.getKey());
-                    versionListing.getVersionSummaries().forEach(vsum -> {
-                        LOGGER.debug("key:" + vsum.getKey() + " version:" + vsum.getVersionId());
+            boolean allowedToSeeBuckets = false;
+            if (allowedToSeeBuckets) {
+                List<Bucket> buckets = conn.listBuckets();
+                buckets.forEach(bucket -> {
+                    LOGGER.debug("found bucket:" + bucket);
+                    ObjectListing objectListing = conn.listObjects(new ListObjectsRequest().withBucketName(bucket.getName()));
+                    objectListing.getObjectSummaries().forEach(sum -> {
+                        LOGGER.debug("found " + sum.getKey() + " in " + sum.getBucketName());
+                        VersionListing versionListing = conn.listVersions(sum.getBucketName(), sum.getKey());
+                        versionListing.getVersionSummaries().forEach(vsum -> {
+                            LOGGER.debug("key:" + vsum.getKey() + " version:" + vsum.getVersionId());
+                        });
                     });
                 });
-            });
+            }
 
             // Erzeuge Datei affe.txt im bucket affe
             Bucket bucket = null;
@@ -98,7 +105,9 @@ public class DirectAmazonS3Test {
                 bucket = conn.createBucket(AFFE);
             } else {
                 LOGGER.debug("bucket " + AFFE + " wird wiederverwendet");
-                bucket = conn.listBuckets().stream().filter(b -> b.getName().equals(AFFE)).findFirst().get();
+                if (allowedToSeeBuckets) {
+                    bucket = conn.listBuckets().stream().filter(b -> b.getName().equals(AFFE)).findFirst().get();
+                }
             }
 
             String key = "firstFile.txt";
@@ -113,11 +122,6 @@ public class DirectAmazonS3Test {
                 Map<String, String> userMetadata = new HashMap<>();
                 userMetadata.put("mykey", "myvalue");
                 userMetadata.put("mykey2", "{\"jsonkey\":\"json myvalue\"}");
-
-                String s = metadataString;
-                s = HexUtil.convertBytesToHexString(metadataString.getBytes());
-                LOGGER.debug("SETZE METADATA AUF " + s);
-                userMetadata.put("mykey3", s);
 
                 objectMetadata.setUserMetadata(userMetadata);
                 PutObjectRequest putObjectRequest = new PutObjectRequest(AFFE, key, is, objectMetadata);
@@ -293,53 +297,4 @@ public class DirectAmazonS3Test {
         PutObjectResult putObjectResult = conn.putObject(putObjectRequest);
         LOGGER.debug("creation of object :" + putObjectResult.toString());
     }
-
-
-    private final static String metadataString = "{\n" +
-            "  \"storageType\": \"BLOB\",\n" +
-            "  \"providerID\": \"Die ProviderID 1\",\n" +
-            "  \"name\": \"storagemetadata/1/filea\",\n" +
-            "  \"location\": {\n" +
-            "    \"parent\": {\n" +
-            "      \"CLASSNAME\": \"de.adorsys.encobject.service.impl.SimpleLocationImpl\",\n" +
-            "      \"DATA\": {\n" +
-            "        \"locationScope\": \"HOST\",\n" +
-            "        \"id\": \"LocationID0\",\n" +
-            "        \"description\": \"any description of parent location\",\n" +
-            "        \"iso3166Codes\": []\n" +
-            "      }\n" +
-            "    },\n" +
-            "    \"locationScope\": \"SYSTEM\",\n" +
-            "    \"id\": \"LocationID1\",\n" +
-            "    \"description\": \"any description of this location\",\n" +
-            "    \"iso3166Codes\": [\n" +
-            "      \"Iso3166Code2\",\n" +
-            "      \"Iso3166Code3\",\n" +
-            "      \"Iso3166Code0\",\n" +
-            "      \"Iso3166Code1\",\n" +
-            "      \"Iso3166Code4\"\n" +
-            "    ]\n" +
-            "  },\n" +
-            "  \"uri\": \"www.electronicpeter.de\",\n" +
-            "  \"userMetaData\": {\n" +
-            "    \"map\": {\n" +
-            "      \"key_8 mit json elementen: {\\\"quote\\\":\\\"VALUE\\\"} \": \"{\\\"quote\\\":\\\"VALUE\\\"} \",\n" +
-            "      \"key_9 mit json elementen: {\\\"quote\\\":\\\"VALUE\\\"} \": \"{\\\"quote\\\":\\\"VALUE\\\"} \",\n" +
-            "      \"key_7 mit json elementen: {\\\"quote\\\":\\\"VALUE\\\"} \": \"{\\\"quote\\\":\\\"VALUE\\\"} \",\n" +
-            "      \"key_4 mit json elementen: {\\\"quote\\\":\\\"VALUE\\\"} \": \"{\\\"quote\\\":\\\"VALUE\\\"} \",\n" +
-            "      \"key_3 mit json elementen: {\\\"quote\\\":\\\"VALUE\\\"} \": \"{\\\"quote\\\":\\\"VALUE\\\"} \",\n" +
-            "      \"key_0 mit json elementen: {\\\"quote\\\":\\\"VALUE\\\"} \": \"{\\\"quote\\\":\\\"VALUE\\\"} \",\n" +
-            "      \"key_1 mit json elementen: {\\\"quote\\\":\\\"VALUE\\\"} \": \"{\\\"quote\\\":\\\"VALUE\\\"} \",\n" +
-            "      \"key_2 mit json elementen: {\\\"quote\\\":\\\"VALUE\\\"} \": \"{\\\"quote\\\":\\\"VALUE\\\"} \",\n" +
-            "      \"key_5 mit json elementen: {\\\"quote\\\":\\\"VALUE\\\"} \": \"{\\\"quote\\\":\\\"VALUE\\\"} \",\n" +
-            "      \"key_6 mit json elementen: {\\\"quote\\\":\\\"VALUE\\\"} \": \"{\\\"quote\\\":\\\"VALUE\\\"} \"\n" +
-            "    }\n" +
-            "  },\n" +
-            "  \"eTag\": \"DAs legendäre ETAG\",\n" +
-            "  \"creationDate\": \"Feb 20, 2018 2:54:18 PM\",\n" +
-            "  \"lastModified\": \"Feb 20, 2018 2:54:41 PM\",\n" +
-            "  \"size\": 1111,\n" +
-            "  \"shouldBeCompressed\": true,\n" +
-            "  \"contentType\": \"application/xml\"\n" +
-            "}";
 }
